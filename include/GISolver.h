@@ -37,7 +37,7 @@ class BackwardEulerSolver : public GISolverBase
     GISolver b;
 };
 
-
+//semi-implicit
 class ForwardEulerSolver : public GISolverBase
 {
   public:
@@ -57,7 +57,7 @@ class ForwardEulerSolver : public GISolverBase
     GISolver b;
 };
 
-
+//vel,pos,vel
 class LeapFrogSolver : public GISolverBase
 {
   public:

@@ -11,7 +11,7 @@ class AABB
 {
   public:
     AABB();
-    AABB(Vector& URC, Vector& LLC);
+    AABB(const Vector& LLC, const Vector& URC);
     ~AABB();
 
     const Vector& getURC() const { return urc;}

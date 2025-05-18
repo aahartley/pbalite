@@ -14,21 +14,24 @@ class NeighborSearch
 {
   public:
     NeighborSearch();
-    NeighborSearch(AABB& b, float r);
+    NeighborSearch(const AABB& b, float r);
     ~NeighborSearch();
 
     void populate(const DynamicalStateData& state);
-    void clear();
+    void clear_grid();
 
     size_t index( const Vector& P ) const;
     size_t index( size_t i, size_t j, size_t k ) const;
     void anti_index( const size_t ind, size_t& i, size_t& j, size_t& k ) const;
 
 
-    void neighborsList(std::vector<size_t>& neighbors, const Vector& pos);
+    void neighbors_list(std::vector<size_t>& neighbors, const Vector& pos, const bool use_parallel);
 
 
-    void inBounds(const Vector& pos, size_t i);
+    void in_bounds(const Vector& pos, size_t i);
+    void compute_size();
+    void set_cellsize(const float r);
+    void set_bounds(const AABB& b);
 
 
 
@@ -37,7 +40,7 @@ class NeighborSearch
     float radius;
     std::vector< std::vector<size_t> > grid;
     float cell_size;
-    int size;
+    size_t size;
     Vector L;
     size_t nx;
     size_t ny;

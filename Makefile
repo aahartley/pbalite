@@ -11,15 +11,19 @@ OFILES = base/PbaViewer.o \
 	 	 base/ScreenCapturePPM.o \
 		 base/DynamicalState.o \
 		 base/ForceLibrary.o \
+		 base/Viscosity.o\
 		 base/ParticleEmitter.o \
 		 base/GISolver.o \
 		 base/ExplicitDynamics.o \
 		 base/CollisionHandler.o \
 		 base/CollisionSurface.o \
 		 base/CollisionPlane.o \
+		 base/WCSPHSolver.o\
+		 base/DFSPHSolver.o\
 	 	 things/MyThing.o \
 		 things/GravityThing.o \
 		 things/WCSPHThing.o \
+		 things/DFSPHThing.o\
 
 
 

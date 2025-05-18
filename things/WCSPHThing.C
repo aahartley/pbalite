@@ -22,12 +22,15 @@ WCSPHThing::WCSPHThing(const std::string nam) :
  emit       (false)
 {
     box = makeCollisionSurface();
-    CollisionInfinitePlane bottom(Vector(0,1,0),Vector(0,-3,0));
-    CollisionInfinitePlane top(Vector(0,-1,0),Vector(0,3,0));
-    CollisionInfinitePlane right(Vector(-1,0,0),Vector(3,0,0));
-    CollisionInfinitePlane left(Vector(1,0,0),Vector(-3,0,0));
-    CollisionInfinitePlane front(Vector(0,0,-1),Vector(0,0,3)); //closest to screen
-    CollisionInfinitePlane back(Vector(0,0,1),Vector(0,0,-3)); //(z points to screen)
+    float x = 0.3;
+    float y = 0.7;
+    float z = 0.3;
+    CollisionInfinitePlane bottom(Vector(0,1,0),Vector(0,-y,0));
+    CollisionInfinitePlane top(Vector(0,-1,0),Vector(0,y,0));
+    CollisionInfinitePlane right(Vector(-1,0,0),Vector(x,0,0));
+    CollisionInfinitePlane left(Vector(1,0,0),Vector(-x,0,0));
+    CollisionInfinitePlane front(Vector(0,0,-1),Vector(0,0,z)); //closest to screen
+    CollisionInfinitePlane back(Vector(0,0,1),Vector(0,0,-z)); //(z points to screen)
     box->addPlane(bottom);
     box->addPlane(top);
     box->addPlane(right);
@@ -35,36 +38,40 @@ WCSPHThing::WCSPHThing(const std::string nam) :
     box->addPlane(back);
     box->addPlane(front);
     AddCollisionSurface(box);
-    state = CreateDynamicalState("ParticleState");
+    state = CreateSPH(AABB(Vector(-5,-5,-5), Vector(5,5,5)), 0.1, "SPHState");
     Reset();
-    int inc = 1;
-    state->add(inc);
+    // int inc = 1;
+    // state->add(inc);
 
-    std::cout << "Emit: Total Points " << state->nb() << std::endl;
-    emitter = ParticleEmitter();
-    for(size_t i = 0; i < state->nb(); i++)
-    {
-        Vector p(0,2.9,0);
-        Vector v(0,0,0);
-        Color c(0,0,1,1);
-        state->set_pos(i,p);
-        state->set_vel(i,v);
-        state->set_ci(i,c);
-        state->set_rad(i, 0.5f); //0.075
+    // std::cout << "Emit: Total Points " << state->nb() << std::endl;
+    // emitter = ParticleEmitter();
+    // for(size_t i = 0; i < state->nb(); i++)
+    // {
+    //     Vector p(0,2.9,0);
+    //     Vector v(0,0,0);
+    //     Color c(0,0,1,1);
+    //     state->set_pos(i,p);
+    //     state->set_vel(i,v);
+    //     state->set_ci(i,c);
+    //     state->set_mass(i, state->get_float_attr("volume", i) * state->get_density0());
+    //     state->set_id(i,i);
 
-
-    }
+    // }
 
     force = CreateAccumulatingForce();
 
     gravityforce = CreateGravityForce(Vector(0,-9.81f,0));
+    pressure_force = CreateTaitPressureForce(50000, 1000, 7);
+    viscosity = CreateExplicitViscosity(0.01);
 
     std::shared_ptr<AccumulatingForce> f = dynamic_pointer_cast<AccumulatingForce>(force); 
 	f->add_force(gravityforce);
-    //GISolver a = CreateAdvancePosition(state);
-    GISolver a = CreateAdvancePositionColl(state, collisions);
-    GISolver b = CreateAdvanceVelcity(state, force);
-    solver = CreateForwardEulerSolver(a, b);
+    f->add_force(viscosity);
+    f->add_force(pressure_force);
+    GISolver a = CreateAdvancePositionCollSPH(state, collisions);
+    GISolver b = CreateAdvanceVelocitySPH(state, force);
+    GISolver b_euler = CreateBackwardEulerSolver(a, b);
+    solver = CreateWCSPHSolver(state, force, 0,0, collisions, b_euler);
     std::cout << name << " constructed\n";
 
 }
@@ -79,16 +86,26 @@ void WCSPHThing::Init( const std::vector<std::string>& args )
 void WCSPHThing::Display() 
 {
     pba::Display(box);
-    glPointSize(5.0);
-    glBegin(GL_POINTS);
+    // glPointSize(5.0);
+    // glBegin(GL_POINTS);
+    // for( size_t i=0;i<state->nb();i++ )
+    // {
+    //     const Vector& P = state->pos(i);
+    //     const Color& ci = state->ci(i);
+    //     glColor3f( ci.red(), ci.green(), ci.blue() );
+    //     glVertex3f( P.X(), P.Y(), P.Z() );
+    // }
+    // glEnd();
     for( size_t i=0;i<state->nb();i++ )
     {
-        const Vector& P = state->pos(i);
-        const Color& ci = state->ci(i);
-        glColor3f( ci.red(), ci.green(), ci.blue() );
-        glVertex3f( P.X(), P.Y(), P.Z() );
+       const Color& ci = state->ci(i);
+       const pba::Vector& v = state->pos(i);
+       glPushMatrix();
+       glColor3f( ci.red(), ci.green(), ci.blue() );
+       glTranslatef(v.X(), v.Y(),v.Z());
+       glutSolidSphere(0.025, 30,30);
+       glPopMatrix();
     }
-    glEnd();
 }
 
 void WCSPHThing::Keyboard( unsigned char key, int x, int y )
@@ -134,27 +151,27 @@ void WCSPHThing::Keyboard( unsigned char key, int x, int y )
         box->set_coeff_sticky( box->coeff_sticky()*1.1 );
         std::cout << "coefficient of sticky: " << box->coeff_sticky() << std::endl;
     }
-    if( key == 'l' )
-    {
-        GISolver solvera = CreateAdvancePositionColl( state, collisions );
-        GISolver solverb = CreateAdvanceVelcity(state,force);
-        solver = CreateLeapFrogSolver(solvera,solverb);
-        std::cout << "Using Leap Frog solver" << std::endl;
-    }
-    if( key == 'n' )
-    {
-        GISolver solvera = CreateAdvancePositionColl( state, collisions );
-        GISolver solverb = CreateAdvanceVelcity(state,force);
-        solver = CreateForwardEulerSolver(solvera,solverb); // forward
-   std::cout << "Using Forward Euler solver" << std::endl;
-    }
-    if( key == 'b' )
-    {
-        GISolver solverb = CreateAdvanceVelcity(state,force);
-        GISolver solvera = CreateAdvancePositionColl( state, collisions );
-        solver = CreateForwardEulerSolver(solverb,solvera); //backward
-        std::cout << "Using Backward Euler solver" << std::endl;
-    }
+//     if( key == 'l' )
+//     {
+//         GISolver solvera = CreateAdvancePositionColl( state, collisions );
+//         GISolver solverb = CreateAdvanceVelcity(state,force);
+//         solver = CreateLeapFrogSolver(solvera,solverb);
+//         std::cout << "Using Leap Frog solver" << std::endl;
+//     }
+//     if( key == 'n' )
+//     {
+//         GISolver solvera = CreateAdvancePositionColl( state, collisions );
+//         GISolver solverb = CreateAdvanceVelcity(state,force);
+//         solver = CreateForwardEulerSolver(solvera,solverb); // forward
+//    std::cout << "Using Forward Euler solver" << std::endl;
+//     }
+//     if( key == 'b' )
+//     {
+//         GISolver solverb = CreateAdvanceVelcity(state,force);
+//         GISolver solvera = CreateAdvancePositionColl( state, collisions );
+//         solver = CreateForwardEulerSolver(solverb,solvera); //backward
+//         std::cout << "Using Backward Euler solver" << std::endl;
+//     }
 
 }
 
@@ -164,8 +181,10 @@ void WCSPHThing::solve()
     if(emit)
     {
         emitter.emitCube(state, 6, Vector(0,0,0));
+        emit = false;
     }
     solver->solve(dt);
+    state->erase_outside_bounds(Vector(-5,-5,-5), Vector(5,5,5));
 }
 
 void WCSPHThing::Reset()
@@ -193,7 +212,7 @@ void WCSPHThing::AddCollisionSurface(pba::CollisionSurface& s)
     std::cout << "Add CollisionSurface\n";
     box = s;
     s->set_coeff_restitution(0.5);
-    //s->set_coeff_sticky(0.1);
+    s->set_coeff_sticky(0.7);
     collisions.set_collision_surface(box);
 }
 

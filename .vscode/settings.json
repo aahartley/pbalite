@@ -68,6 +68,10 @@
         "WCSPHThing.C": "cpp",
         "SPHState.C": "cpp",
         "AABB.C": "cpp",
-        "NeighborSearch.C": "cpp"
+        "NeighborSearch.C": "cpp",
+        "DFPSHSolver.C": "cpp",
+        "WCSPHSolver.C": "cpp",
+        "DFSPHThing.C": "cpp",
+        "DFSPHSolver.C": "cpp"
     }
 }

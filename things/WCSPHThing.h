@@ -9,6 +9,9 @@
 #include "ForceLibrary.h"
 #include "CollisionHandler.h"
 #include "ParticleEmitter.h"
+#include "SPHState.h"
+#include "Viscosity.h"
+#include "WCSPHSolver.h"
 
 
 
@@ -68,10 +71,12 @@ class WCSPHThing: public PbaThingyDingy
 
     // flag for whether to create more particles
     bool emit;
-    DynamicalState state;
+    SPHState state;
     GISolver solver;
     Force force;
     Force gravityforce;
+    Force pressure_force;
+    Force viscosity;
  
     ElasticCollisionHandler collisions;
     CollisionSurface box;

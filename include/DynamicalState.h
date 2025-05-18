@@ -3,6 +3,7 @@
 
 #include "Color.h"
 #include "Vector.h"
+#include "AABB.h"
 
 #include <vector>
 #include <string>
@@ -41,6 +42,11 @@ class DSAttribute
     void clear() { data.clear(); }
     const std::string& attr_name() const { return name; }
     const T& default_value() const { return defVal; }
+    void erase(const size_t i)
+    {
+      typename std::vector<T>::iterator removable = data.begin() + i;
+	    data.erase(removable);
+    }
     //typename for ::
     typename std::vector<T>::const_iterator cbegin() const { return data.begin(); }
     typename std::vector<T>::const_iterator cend() const { return data.end(); }
@@ -100,6 +106,9 @@ class DynamicalStateData
     const std::string& Name() const { return name; }
     void re_find_main_attrs();
 
+    int erase_outside_bounds( const Vector& llc, const Vector& urc );
+
+
 
   protected:
     std::string name;
@@ -122,6 +131,8 @@ class DynamicalStateData
 typedef std::shared_ptr<pba::DynamicalStateData> DynamicalState;
   
 DynamicalState CreateDynamicalState(const std::string& nam = "DynamicalDataNoName");
+AABB BoundingBox( const DynamicalState& d );
+
 }
 
 #endif

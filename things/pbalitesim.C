@@ -5,7 +5,7 @@
 #include "MyThing.h"
 #include "GravityThing.h"
 #include "WCSPHThing.h"
-
+#include "DFSPHThing.h"
 
 
 int main(int argc, char** argv)
@@ -25,7 +25,8 @@ int main(int argc, char** argv)
    // Set up a simulation thing
    //pba::PbaThing mything = pba::CreateMyThing();
    //pba::PbaThing mything = pba::CreateGravityThing();
-   pba::PbaThing mything = pba::CreateWCSPHThing();
+   //pba::PbaThing mything = pba::CreateWCSPHThing();
+   pba::PbaThing mything = pba::CreateDFSPHThing();
 
    viewer->AddThing(mything);
 

@@ -4,7 +4,7 @@ using namespace pba;
 
 AABB::AABB(){}
 
-AABB::AABB(Vector& URC, Vector& LLC): urc(URC), llc(LLC){}
+AABB::AABB(const Vector& LLC, const Vector& URC): urc(URC), llc(LLC){}
 
 AABB::~AABB(){}
 

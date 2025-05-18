@@ -23,7 +23,7 @@ class SPHStateData : public DynamicalStateData, public NeighborSearch
   public:
 
     SPHStateData( const AABB& bounds, const double h, const std::string& nam = "SPHDataNoName" );
-   ~SPHStateData();
+    ~SPHStateData();
 
 
     const float get_radius() const { return radius; }
@@ -43,6 +43,8 @@ class SPHStateData : public DynamicalStateData, public NeighborSearch
     void set_maxError(int mx);
     const bool get_ddClamp() const { return dd_clamp;}
     void set_ddClamp(bool cl);
+    const bool get_neighborParallel() const { return neighbor_parallel;}
+    void set_neighborParallel(bool cl);
 
     const float weight( size_t p, const Vector& P ) const;
     const Vector grad_weight( size_t p, const Vector& P ) const;
@@ -53,9 +55,9 @@ class SPHStateData : public DynamicalStateData, public NeighborSearch
     void compute_factor();
     void populate();
 
-    float average_density(); //const;
-    float average_density_derivative(); //const;
-    float average_predicted_density(); //const;
+    // float average_density(); //const;
+    // float average_density_derivative(); //const;
+    // float average_predicted_density(); //const;
     float max_velocity() const;
 
   
@@ -70,6 +72,7 @@ class SPHStateData : public DynamicalStateData, public NeighborSearch
     int maxIter;
     bool dd_clamp;
     bool useUserDT;
+    bool neighbor_parallel;
 
 
 

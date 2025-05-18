@@ -286,8 +286,67 @@ void DynamicalStateData::re_find_main_attrs()
    }
 }
 
+int DynamicalStateData::erase_outside_bounds( const Vector& llc, const Vector& urc )
+{
+   AABB bounds(llc, urc);
+   //std::cout << "erase outsdie of bounds" << ": llc " << llc.X() << ' ' << llc.Y() << ' ' << llc.Z() <<  " urc " << urc.X() << ' ' << urc.Y() << ' ' << urc.Z() <<'\n';
+   size_t p = 0;
+   int count = 0;
+   while( p < nb_items )
+   {
+      const Vector& P = pos(p);
+      if(bounds.isInside(P))
+      {
+         p++;
+      }
+      else
+      {
+         for( std::map< std::string, DSAttribute<int> >::iterator a = int_attributes.begin(); a != int_attributes.end(); a++ )
+         {
+            a->second.erase(p);
+         }
+         for( std::map< std::string, DSAttribute<float> >::iterator a = float_attributes.begin(); a != float_attributes.end(); a++ )
+         {
+            a->second.erase(p);
+         }
+         for( std::map< std::string, DSAttribute<Vector> >::iterator a = vector_attributes.begin(); a != vector_attributes.end(); a++ )
+         {
+            a->second.erase(p);
+         }
+         for( std::map< std::string, DSAttribute<Color> >::iterator a = color_attributes.begin(); a != color_attributes.end(); a++ )
+         {
+            a->second.erase(p);
+         }
+         //std::cout << "erased particle: " << p << '\n';
+         nb_items--;
+	 count++; 
+      }
+   }
+   if(count > 0)
+      std::cout << "Number removed: " << count << std::endl;
+   re_find_main_attrs();
+   return count;
+}
+
 DynamicalState pba::CreateDynamicalState(const std::string& nam)
 {
     //return DynamicalState(new DynamicalStateData(nam)); //2 memory alloc header
     return std::make_shared<DynamicalStateData>(nam);
+}
+
+pba::AABB pba::BoundingBox( const DynamicalState& d )
+{
+   Vector llc = d->pos(0);
+   Vector urc = d->pos(0);
+   for(size_t i = 1; i < d->nb(); i++)
+   {
+      Vector P = d->pos(i);
+      if( P[0] < llc[0] ){ llc[0] = P[0]; }
+      if( P[1] < llc[1] ){ llc[1] = P[1]; }
+      if( P[2] < llc[2] ){ llc[2] = P[2]; }
+      if( P[0] > urc[0] ){ urc[0] = P[0]; }
+      if( P[1] > urc[1] ){ urc[1] = P[1]; }
+      if( P[2] > urc[2] ){ urc[2] = P[2]; }
+   }
+   return pba::AABB(llc,urc);
 }

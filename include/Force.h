@@ -12,6 +12,8 @@ class ForceBase
     ForceBase(){}
     //! compute forces on the dynamical state and update the accel attribute(s)
     virtual void compute(DynamicalState& s, const double dt) = 0;
+    virtual void compute(SPHState& s, const double dt) = 0;
+
     virtual ~ForceBase(){};
 };
 typedef std::shared_ptr<pba::ForceBase> Force;
