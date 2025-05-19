@@ -44,54 +44,54 @@ SPHState pba::CreateSPH( const AABB& bounds, const double h, const std::string& 
 //cubic spline kernel
 const float SPHStateData::weight(size_t p, const Vector& P) const
 {
-            float res = 0.0;
-         Vector X = (P - pos(p));
-         float x = X.magnitude();
-         float h3 = radius * radius * radius;
-         float m_k = static_cast<float>(8.0) / (M_PI*h3);
-            const float q = x / radius;
-            if (q <= 1.0)
-            {
-                if (q <= 0.5)
-                {
-                    const float q2 = q*q;
-                    const float q3 = q2*q;
-                    res = m_k * (static_cast<float>(6.0)*q3 - static_cast<float>(6.0)*q2 + static_cast<float>(1.0));
-                }
-                else
-                {
-                    res = m_k * (static_cast<float>(2.0)*pow(static_cast<float>(1.0) - q, static_cast<float>(3.0)));
-                }
-            }
-        //std::cout << "weight "<< p << ": " << res << '\n';
-            return res;
+    float res = 0.0;
+    Vector X = (P - pos(p));
+    float x = X.magnitude();
+    float h3 = radius * radius * radius;
+    float m_k = static_cast<float>(8.0) / (M_PI*h3);
+    const float q = x / radius;
+    if (q <= 1.0)
+    {
+        if (q <= 0.5)
+        {
+            const float q2 = q*q;
+            const float q3 = q2*q;
+            res = m_k * (static_cast<float>(6.0)*q3 - static_cast<float>(6.0)*q2 + static_cast<float>(1.0));
+        }
+        else
+        {
+            res = m_k * (static_cast<float>(2.0)*pow(static_cast<float>(1.0) - q, static_cast<float>(3.0)));
+        }
+    }
+//std::cout << "weight "<< p << ": " << res << '\n';
+    return res;
 }
 const Vector SPHStateData::grad_weight(size_t p, const Vector& P) const
 {
-            Vector res; 
-         Vector X = (P- pos(p));
-         const float x = X.magnitude();
-            const float q = x/ radius;
-         float h3 = radius * radius * radius;
-         float m_l = static_cast<float>(48.0) / (M_PI*h3);
-            if ((x > 1.0e-9) && (q <= 1.0))
-            {
-                Vector gradq = X / x;
-                gradq /= radius;
-                if (q <= 0.5)
-                {
-                    res = m_l*q*((float) 3.0*q - static_cast<float>(2.0))*gradq;
-                }
-                else
-                {
-                    const float factor = static_cast<float>(1.0) - q;
-                    res = m_l*(-factor*factor)*gradq;
-                }
-            }
-            else
-                res.set(0,0,0);
+    Vector res; 
+    Vector X = (P- pos(p));
+    const float x = X.magnitude();
+    const float q = x/ radius;
+    float h3 = radius * radius * radius;
+    float m_l = static_cast<float>(48.0) / (M_PI*h3);
+    if ((x > 1.0e-9) && (q <= 1.0))
+    {
+        Vector gradq = X / x;
+        gradq /= radius;
+        if (q <= 0.5)
+        {
+            res = m_l*q*((float) 3.0*q - static_cast<float>(2.0))*gradq;
+        }
+        else
+        {
+            const float factor = static_cast<float>(1.0) - q;
+            res = m_l*(-factor*factor)*gradq;
+        }
+    }
+    else
+        res.set(0,0,0);
 
-            return res;
+    return res;
 }
 
 void SPHStateData::compute_density()

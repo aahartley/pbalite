@@ -2,6 +2,7 @@
 #define __PBA_GISOLVER_H__
 
 #include <memory>
+#include <cmath>
 
 namespace pba
 {
@@ -70,19 +71,111 @@ class LeapFrogSolver : public GISolverBase
     void solve(const double dt)
     {
         const double dtd2 = 0.5*dt;
-        a->solve(dtd2);
-        b->solve(dt);
-        a->solve(dtd2);
+        b->solve(dtd2);
+        a->solve(dt);
+        b->solve(dtd2);
     }
   private:
     GISolver a;
     GISolver b;
 };
+//! Implements multiple substeps of specified solver
+class GISolverSubstep : public GISolverBase
+{
+  public:
+    GISolverSubstep( GISolver& s, int nbsteps ) : 
+        _solver (s), _steps (nbsteps)
+	{}
+
+    ~GISolverSubstep(){}
+
+    void init(){ _solver->init(); }
+
+    void solve( const double dt )
+    {
+        const double dta = dt/_steps;
+	for( int i=0;i<_steps;i++){ _solver->solve(dta); }
+    }
+
+  private:
+
+    GISolver _solver;
+    double _steps;
+};
+
+
+
+//! Fourth order accurate
+class GISolverFourthOrder : public GISolverBase
+{
+  public:
+    GISolverFourthOrder( GISolver& s ) : 
+        _solver (s) 
+	{
+	    _a = 1.0/( 2.0 - std::pow(2.0, 1.0/3.0) );
+            _b = 1.0 - 2.0*_a;
+	}
+
+    ~GISolverFourthOrder(){}
+
+    void init(){ _solver->init(); }
+
+    void solve( const double dt )
+    {
+        const double dta = _a * dt;
+	const double dtb = _b * dt;
+	_solver->solve(dta);
+	_solver->solve(dtb);
+	_solver->solve(dta);
+    }
+
+
+  private:
+
+    GISolver _solver;
+    double _a,_b;
+};
+
+
+//! Sixth order accurate
+class GISolverSixthOrder : public GISolverBase
+{
+  public:
+    GISolverSixthOrder( GISolver& s ) : 
+        _solver (s) 
+	{
+	    _a = 1.0/( 4.0 - std::pow(4.0, 1.0/3.0) );
+            _b = 1.0 - 4.0*_a;
+	}
+
+    ~GISolverSixthOrder(){}
+
+    void init(){ _solver->init(); }
+
+    void solve( const double dt )
+    {
+        const double dta = _a * dt;
+	const double dtb = _b * dt;
+	_solver->solve(dta);
+	_solver->solve(dta);
+	_solver->solve(dtb);
+	_solver->solve(dta);
+	_solver->solve(dta);
+    }
+
+
+  private:
+
+    GISolver _solver;
+    double _a, _b;
+};
 
 GISolver CreateLeapFrogSolver(GISolver& A, GISolver& B);
 GISolver CreateForwardEulerSolver(GISolver& A, GISolver& B);
 GISolver CreateBackwardEulerSolver(GISolver& A, GISolver& B);
-
+GISolver CreateGISolverSubstep( GISolver& s, int nbsteps );
+GISolver CreateGISolverFourthOrder( GISolver& s );
+GISolver CreateGISolverSixthOrder( GISolver& s );
 
 }
 

@@ -72,6 +72,9 @@
         "DFPSHSolver.C": "cpp",
         "WCSPHSolver.C": "cpp",
         "DFSPHThing.C": "cpp",
-        "DFSPHSolver.C": "cpp"
+        "DFSPHSolver.C": "cpp",
+        "SoftBodyThing.C": "cpp",
+        "SoftBodyState.C": "cpp",
+        "Viscosity.C": "cpp"
     }
 }

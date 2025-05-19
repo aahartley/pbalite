@@ -3,8 +3,10 @@
 
 #include "DynamicalState.h"
 #include "SPHState.h"
-#include <memory>
+#include "SoftBodyState.h"
 #include "Force.h"
+#include <memory>
+
 namespace pba
 {
 class GravityForce : public ForceBase
@@ -16,6 +18,7 @@ class GravityForce : public ForceBase
     ~GravityForce(){}
     void compute(DynamicalState& s, const double dt);
     void compute(SPHState& s, const double dt);
+    void compute(SoftBodyState& s, const double dt);
     void set_gravity(const Vector& g){gravity=g;}
     const Vector& get_gravity() const{return gravity;}
   private:
@@ -33,6 +36,7 @@ class TaitPressureForce : public ForceBase
     ~TaitPressureForce(){}
     void compute(DynamicalState& s, const double dt);
     void compute(SPHState& s, const double dt);
+    void compute(SoftBodyState& s, const double dt);
     void set_strenth(const float s){strength=s;}
     const float get_strength() const{return strength;}
     void set_rho0(const float s){rho_0=s;}
@@ -55,6 +59,7 @@ class HarmonicOscillatorForce : public ForceBase
     ~HarmonicOscillatorForce(){}
     void compute(DynamicalState& s, const double dt);
     void compute(SPHState& s, const double dt);
+    void compute(SoftBodyState& s, const double dt);
     // set and gets to be able to change the force strength
     void set_kd(const double& v){ Kd = v; }
     const double& get_kd() const { return Kd; }
@@ -75,10 +80,25 @@ class AccumulatingForce : public ForceBase
     ~AccumulatingForce(){}
     void compute(DynamicalState& s, const double dt);
     void compute(SPHState& s, const double dt);
+    void compute(SoftBodyState& s, const double dt);
     // Build up the collection of forces to accumulate
     void add_force(Force& f);
   private:
     std::vector<Force> forces;
+};
+
+class AccumulatingStrutForce : public pba::ForceBase
+{
+  public:
+    AccumulatingStrutForce( const double g, const double f, const bool c ) : spring(g), friction(f), crit_damp(c) {}
+    ~AccumulatingStrutForce(){};
+    void compute(DynamicalState& s, const double dt);
+    void compute(SPHState& s, const double dt);
+    void compute( SoftBodyState& pq, const double dt );
+  private:
+    double spring;
+    double friction;
+    bool crit_damp;
 };
 
 //EXAMPLE:
@@ -97,6 +117,8 @@ pba::Force CreateTaitPressureForce(const float s, const float rest, const float 
 pba::Force CreateHarmonicOscillatorForce(const double& k);
 
 pba::Force CreateAccumulatingForce();
+pba::Force CreateAccumulatingStrutForce(const double g, const double f, const bool c);
+
 }
 
 #endif

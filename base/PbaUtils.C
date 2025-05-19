@@ -39,3 +39,31 @@ void pba::Display( pba::CollisionSurface& s )
 
     }
 }
+
+void pba::GeoToSoftBody(const std::string& file, SoftBodyState& s )
+{
+    std::vector<Vector> verts = ObjLoader::loadObjVert(file);
+    s->add(verts.size());
+    s->set_num_pairs((verts.size()*(verts.size()-1))/2);
+    std::cout << "uniq edges "<<(verts.size()*(verts.size()-1))/2 << '\n';
+    #pragma omp parallel for
+    for(size_t i = 0; i < verts.size(); i++)
+    {
+        s->set_id(i, i);
+        s->set_pos(i,Vector(verts[i].X(), verts[i].Y(), verts[i].Z()));
+        s->set_mass(i,1);
+        s->set_vel(i, Vector(0,0,0));
+        s->set_ci(i, Color(0,0,1,1));;
+    }
+    #pragma omp parallel for schedule(dynamic)
+    for(size_t i = 0; i < verts.size(); i++)
+    {
+        size_t start_count = (i * (2 * verts.size() - i - 1)) / 2;
+
+        for(size_t j = i+1; j < verts.size(); j++)
+        {
+            size_t count = start_count + (j - i - 1);
+            s->add_pair(i, j, count);
+        }
+    }
+}

@@ -14,3 +14,14 @@ GISolver pba::CreateLeapFrogSolver(GISolver& A, GISolver& B)
 {
   return std::make_shared<LeapFrogSolver>(A, B);
 }
+GISolver pba::CreateGISolverSubstep(GISolver& s, int nbsteps )
+{
+  return std::make_shared<GISolverSubstep>(s, nbsteps);
+}GISolver pba::CreateGISolverFourthOrder(GISolver& A)
+{
+  return std::make_shared<GISolverFourthOrder>(A);
+}GISolver pba::CreateGISolverSixthOrder(GISolver& A)
+{
+  return std::make_shared<GISolverSixthOrder>(A);
+}
+

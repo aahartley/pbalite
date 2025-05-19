@@ -2,6 +2,8 @@
 #define __PBA_FORCE_H__
 
 #include "DynamicalState.h"
+#include "SPHState.h"
+#include "SoftBodyState.h"
 #include <memory>
 
 namespace pba
@@ -13,6 +15,7 @@ class ForceBase
     //! compute forces on the dynamical state and update the accel attribute(s)
     virtual void compute(DynamicalState& s, const double dt) = 0;
     virtual void compute(SPHState& s, const double dt) = 0;
+    virtual void compute(SoftBodyState& s, const double dt) = 0;
 
     virtual ~ForceBase(){};
 };

@@ -28,6 +28,19 @@ void AdvancePositionSPH::solve(const double dt)
   }
 
 }
+AdvancePositionSoftBody::AdvancePositionSoftBody(SoftBodyState& pq) :PQ(pq){}
+AdvancePositionSoftBody::~AdvancePositionSoftBody(){}
+void AdvancePositionSoftBody::init(){}
+void AdvancePositionSoftBody::solve(const double dt)
+{
+
+  #pragma omp parallel for
+  for(size_t i=0; i<PQ->nb(); i++)
+  {
+      PQ->set_pos(i, PQ->pos(i) + PQ->vel(i)*dt);
+  }
+
+}
 
 AdvancePositionWithCollisions::AdvancePositionWithCollisions(DynamicalState& pq, CollisionHandler& coll):PQ(pq),CH(coll){}
 AdvancePositionWithCollisions::~AdvancePositionWithCollisions(){}
@@ -45,6 +58,19 @@ AdvancePositionWithCollisionsSPH::AdvancePositionWithCollisionsSPH(SPHState& pq,
 AdvancePositionWithCollisionsSPH::~AdvancePositionWithCollisionsSPH(){}
 void AdvancePositionWithCollisionsSPH::init(){}
 void AdvancePositionWithCollisionsSPH::solve(const double dt)
+{
+    #pragma omp parallel for
+    for( size_t i=0;i<PQ->nb();i++ )
+    {
+      PQ->set_pos( i, PQ->pos(i) + PQ->vel(i)*dt );
+    }
+    DynamicalState pq = PQ;
+    CH.handle_collisions(dt, pq);
+}
+AdvancePositionWithCollisionsSoftBody::AdvancePositionWithCollisionsSoftBody(SoftBodyState& pq, CollisionHandler& coll):PQ(pq),CH(coll){}
+AdvancePositionWithCollisionsSoftBody::~AdvancePositionWithCollisionsSoftBody(){}
+void AdvancePositionWithCollisionsSoftBody::init(){}
+void AdvancePositionWithCollisionsSoftBody::solve(const double dt)
 {
     #pragma omp parallel for
     for( size_t i=0;i<PQ->nb();i++ )
@@ -81,6 +107,19 @@ void AdvanceVelocitySPH::solve(const double dt)
       PQ->set_vel(i, PQ->vel(i) + PQ->accel(i)*dt);
   }
 }
+AdvanceVelocitySoftBody::AdvanceVelocitySoftBody(SoftBodyState& pq, Force& f): PQ(pq),force(f){}
+AdvanceVelocitySoftBody::~AdvanceVelocitySoftBody(){}
+void AdvanceVelocitySoftBody::init(){}
+void AdvanceVelocitySoftBody::solve(const double dt)
+{
+
+  force->compute(PQ, dt); // computes the force and stores (force/mass) in the state vector acceleration member
+  #pragma omp parallel for
+  for(size_t i=0; i<PQ->nb(); i++)
+  {
+      PQ->set_vel(i, PQ->vel(i) + PQ->accel(i)*dt);
+  }
+}
 
 GISolver pba::CreateAdvanceVelocity(DynamicalState& pq, Force& f)
 {
@@ -106,5 +145,18 @@ GISolver pba::CreateAdvancePositionSPH(SPHState& pq)
 GISolver pba::CreateAdvancePositionCollSPH(SPHState& pq, CollisionHandler& coll )
 {
   return std::make_shared<AdvancePositionWithCollisionsSPH>(pq, coll);
+
+}
+GISolver pba::CreateAdvanceVelocitySoftBody(SoftBodyState& pq, Force& f)
+{
+  return std::make_shared<AdvanceVelocitySoftBody>(pq, f);
+}
+GISolver pba::CreateAdvancePositionSoftBody(SoftBodyState& pq)
+{
+    return std::make_shared<AdvancePositionSoftBody>(pq);
+}
+GISolver pba::CreateAdvancePositionCollSoftBody(SoftBodyState& pq, CollisionHandler& coll )
+{
+  return std::make_shared<AdvancePositionWithCollisionsSoftBody>(pq, coll);
 
 }
