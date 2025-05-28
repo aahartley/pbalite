@@ -26,7 +26,7 @@ class SoftBodyThing: public PbaThingyDingy
   public:
 
     // Feel free to customize the name of this thing.
-    SoftBodyThing(const std::string nam = "Soft Body Thing");
+    SoftBodyThing(const std::string nam = "Soft_Body_Thing");
     ~SoftBodyThing();
 
     //! Initialization, including GLUT initialization.
@@ -77,7 +77,11 @@ class SoftBodyThing: public PbaThingyDingy
  
     ElasticCollisionHandler collisions;
     CollisionSurface box;
+    BVH bvh;
     ParticleEmitter emitter;
+
+    std::vector< std::vector<Vector> > verts;
+    std::vector< std::vector<Triangle> > tris;
 
 };
 

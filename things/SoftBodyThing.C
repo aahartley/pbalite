@@ -22,18 +22,11 @@ SoftBodyThing::SoftBodyThing(const std::string nam) :
  emit       (false)
 {
     box = makeCollisionSurface();
-    CollisionInfinitePlane bottom(Vector(0,1,0),Vector(0,-1,0));
-    CollisionInfinitePlane top(Vector(0,-1,0),Vector(0,3,0));
-    CollisionInfinitePlane right(Vector(-1,0,0),Vector(3,0,0));
-    CollisionInfinitePlane left(Vector(1,0,0),Vector(-3,0,0));
-    CollisionInfinitePlane front(Vector(0,0,-1),Vector(0,0,3)); //closest to screen
-    CollisionInfinitePlane back(Vector(0,0,1),Vector(0,0,-3)); //(z points to screen)
-    box->addPlane(bottom);
-    box->addPlane(top);
-    box->addPlane(right);
-    box->addPlane(left);
-    box->addPlane(back);
-    box->addPlane(front);
+    bvh = makeBVH(Vector(-3,-3,-3), Vector(3,3,3), 0, 20, 1);
+    pba::CreateCube(box, 2, 0.5, 2);
+    bvh->addObject(box);
+    bvh->Divide();
+    //pba::CreateInfiniteCube(box, 2, 1, 2);
     AddCollisionSurface(box);
     state = CreateSoftBodyState("SoftBody");
     Reset();
@@ -56,14 +49,15 @@ SoftBodyThing::SoftBodyThing(const std::string nam) :
     // state->set_ci(1,c);
     // state->set_rad(1, 0.5f); //0.075
     // state->add_pair(0,1,0);
-    GeoToSoftBody("models/bunny_superlo_scaled.obj", state);
+    verts.resize(1); tris.resize(1);
+    GeoToSoftBody(verts[0], tris[0], "models/bunny_superlo_scaled.obj", state);
     //GeoToSoftBody("models/bunny_lo_scaled.obj", state);
 
     std::cout << state->nb_pairs() << '\n';
     force = CreateAccumulatingForce();
 
     gravityforce = CreateGravityForce(Vector(0,-9.81f,0));
-    struts = CreateAccumulatingStrutForce(100,15, false);
+    struts = CreateAccumulatingStrutForce(25,5, false);
 
     std::shared_ptr<AccumulatingForce> f = dynamic_pointer_cast<AccumulatingForce>(force); 
 	f->add_force(gravityforce);
@@ -73,7 +67,7 @@ SoftBodyThing::SoftBodyThing(const std::string nam) :
     GISolver b = CreateAdvanceVelocitySoftBody(state, force);
     GISolver basicsolver = CreateLeapFrogSolver(a,b);
     //basicsolver = CreateGISolverSixthOrder(basicsolver);
-    solver = CreateGISolverSubstep( basicsolver, 7);
+    solver = CreateGISolverSubstep( basicsolver, 8);
     //solver = CreateBackwardEulerSolver(a, b);
     std::cout << name << " constructed\n";
 
@@ -89,14 +83,32 @@ void SoftBodyThing::Init( const std::vector<std::string>& args )
 void SoftBodyThing::Display() 
 {
     pba::Display(box);
-    glPointSize(5.0);
-    glBegin(GL_POINTS);
-    for( size_t i=0;i<state->nb();i++ )
+    // glPointSize(5.0);
+    // glBegin(GL_POINTS);
+    // for( size_t i=0;i<state->nb();i++ )
+    // {
+    //     const Vector& P = state->pos(i);
+    //     const Color& ci = state->ci(i);
+    //     glColor3f( ci.red(), ci.green(), ci.blue() );
+    //     glVertex3f( P.X(), P.Y(), P.Z() );
+    // }
+    // glEnd();
+    glBegin(GL_TRIANGLES);
+    for(size_t j = 0; j < tris.size(); j++)
     {
-        const Vector& P = state->pos(i);
-        const Color& ci = state->ci(i);
-        glColor3f( ci.red(), ci.green(), ci.blue() );
-        glVertex3f( P.X(), P.Y(), P.Z() );
+        for( size_t i = 0; i < tris[j].size(); i++ )
+        {
+            const Vector& v1 = state->pos(tris[j][i].v1);
+            const Vector& v2 = state->pos(tris[j][i].v2);
+            const Vector& v3 = state->pos(tris[j][i].v3);
+
+            const Color& ci = Color(0,0,1,1);
+            glColor3f( ci.red(), ci.green(), ci.blue() );
+            glVertex3f( v1.X(), v1.Y(), v1.Z() );
+            glVertex3f( v2.X(), v2.Y(), v2.Z() );
+            glVertex3f( v3.X(), v3.Y(), v3.Z() );
+
+        }
     }
     glEnd();
 }
@@ -205,6 +217,8 @@ void SoftBodyThing::AddCollisionSurface(pba::CollisionSurface& s)
     s->set_coeff_restitution(0.5);
     //s->set_coeff_sticky(0.1);
     collisions.set_collision_surface(box);
+    collisions.set_bvh(bvh);
+    //collisions.dont_use_bvh();
 }
 
 

@@ -84,7 +84,7 @@ class GISolverSubstep : public GISolverBase
 {
   public:
     GISolverSubstep( GISolver& s, int nbsteps ) : 
-        _solver (s), _steps (nbsteps)
+      _solver (s), _steps (nbsteps)
 	{}
 
     ~GISolverSubstep(){}
@@ -93,8 +93,11 @@ class GISolverSubstep : public GISolverBase
 
     void solve( const double dt )
     {
-        const double dta = dt/_steps;
-	for( int i=0;i<_steps;i++){ _solver->solve(dta); }
+      const double dta = dt/_steps;
+	    for( int i=0;i<_steps;i++)
+      { 
+        _solver->solve(dta);
+      }
     }
 
   private:
@@ -110,11 +113,11 @@ class GISolverFourthOrder : public GISolverBase
 {
   public:
     GISolverFourthOrder( GISolver& s ) : 
-        _solver (s) 
-	{
+      _solver (s) 
+	  {
 	    _a = 1.0/( 2.0 - std::pow(2.0, 1.0/3.0) );
-            _b = 1.0 - 2.0*_a;
-	}
+      _b = 1.0 - 2.0*_a;
+	  }
 
     ~GISolverFourthOrder(){}
 
@@ -122,13 +125,12 @@ class GISolverFourthOrder : public GISolverBase
 
     void solve( const double dt )
     {
-        const double dta = _a * dt;
-	const double dtb = _b * dt;
-	_solver->solve(dta);
-	_solver->solve(dtb);
-	_solver->solve(dta);
+      const double dta = _a * dt;
+	    const double dtb = _b * dt;
+	    _solver->solve(dta);
+	    _solver->solve(dtb);
+	    _solver->solve(dta);
     }
-
 
   private:
 
@@ -137,16 +139,16 @@ class GISolverFourthOrder : public GISolverBase
 };
 
 
-//! Sixth order accurate
+//! Sixth order accurate (goes back in time)
 class GISolverSixthOrder : public GISolverBase
 {
   public:
     GISolverSixthOrder( GISolver& s ) : 
-        _solver (s) 
-	{
+      _solver (s) 
+	  {
 	    _a = 1.0/( 4.0 - std::pow(4.0, 1.0/3.0) );
-            _b = 1.0 - 4.0*_a;
-	}
+      _b = 1.0 - 4.0*_a;
+	  }
 
     ~GISolverSixthOrder(){}
 
@@ -154,13 +156,13 @@ class GISolverSixthOrder : public GISolverBase
 
     void solve( const double dt )
     {
-        const double dta = _a * dt;
-	const double dtb = _b * dt;
-	_solver->solve(dta);
-	_solver->solve(dta);
-	_solver->solve(dtb);
-	_solver->solve(dta);
-	_solver->solve(dta);
+      const double dta = _a * dt;
+      const double dtb = _b * dt;
+      _solver->solve(dta);
+      _solver->solve(dta);
+      _solver->solve(dtb);
+      _solver->solve(dta);
+      _solver->solve(dta);
     }
 
 

@@ -28,7 +28,7 @@ class DFSPHThing: public PbaThingyDingy
   public:
 
     // Feel free to customize the name of this thing.
-    DFSPHThing(const std::string nam = "DFSPH Thing");
+    DFSPHThing(const std::string nam = "DFSPH_Thing");
     ~DFSPHThing();
 
     //! Initialization, including GLUT initialization.

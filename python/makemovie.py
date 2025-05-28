@@ -31,18 +31,18 @@ import sys
 
 if len(sys.argv) > 1:
     if sys.argv[1] == "-h":
-        print "makemovie.py usage:"
-        print "\tmakemovie.py <list of files to convert to a movie>"
-        print "Wild cards make be used in the list."
-        print "The output movie will be named \"test.mov\"."
-        print "Example:"
-        print "\t./makemovie.py *.ppm"
-        print " "
+        print("makemovie.py usage:")
+        print("\tmakemovie.py <list of files to convert to a movie>")
+        print("Wild cards make be used in the list.")
+        print("The output movie will be named \"test.mov\".")
+        print("Example:")
+        print("\t./makemovie.py *.ppm")
+        print(" ")
         sys.exit()
         
 frame = 1
 for img in sys.argv[1:]:
-    print str(frame) + " " + img 
+    print(str(frame) + " " + img )
     padframe = str(frame)
     if frame < 1000:
         padframe = "0" + padframe
@@ -63,5 +63,5 @@ if frame > 1:
     cmd = "ffplay -loop 0 MyMovie.mov"
     os.system(cmd)
 else:
-    print "No frames found. No movie generated."
+    print("No frames found. No movie generated.")
 

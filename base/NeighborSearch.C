@@ -83,7 +83,9 @@ void NeighborSearch::neighbors_list(std::vector<size_t>& neighbors, const Vector
 
         }
         #pragma omp critical
+        {
             neighbors.insert(neighbors.end(), thread_neighbors.begin(), thread_neighbors.end());
+        }
         }
     }
     else

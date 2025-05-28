@@ -28,7 +28,7 @@ class WCSPHThing: public PbaThingyDingy
   public:
 
     // Feel free to customize the name of this thing.
-    WCSPHThing(const std::string nam = "WCSPH Thing");
+    WCSPHThing(const std::string nam = "WCSPH_Thing");
     ~WCSPHThing();
 
     //! Initialization, including GLUT initialization.

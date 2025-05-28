@@ -498,9 +498,9 @@ void DFSPHSolverWithCollisions::correct_divergence_error()
       PQ->set_vel(p, V + dt * PQ->get_vector_attr("pressure_acc", p) );
       #pragma omp critical
       {
-         // if(std::isnan(PQ->vel(p).X()) || std::isinf(PQ->vel(p).X())) std::cout << "dive PQ->vel(p).X() x bad\n";
-         // if(std::isnan(PQ->vel(p).Y()) || std::isinf(PQ->vel(p).Y())) std::cout << "dive PQ->vel(p).Y() x bad\n";
-         // if(std::isnan(PQ->vel(p).Z()) || std::isinf(PQ->vel(p).Z())) std::cout << "dive PQ->vel(p).Z() x bad\n";
+         if(std::isnan(PQ->vel(p).X()) || std::isinf(PQ->vel(p).X())) std::cout << "dive PQ->vel(p).X() x bad\n";
+         if(std::isnan(PQ->vel(p).Y()) || std::isinf(PQ->vel(p).Y())) std::cout << "dive PQ->vel(p).Y() x bad\n";
+         if(std::isnan(PQ->vel(p).Z()) || std::isinf(PQ->vel(p).Z())) std::cout << "dive PQ->vel(p).Z() x bad\n";
       }
    }
 
@@ -646,29 +646,29 @@ float DFSPHSolverWithCollisions::compute_error_force(size_t p, const std::string
 //CFL condition
 void DFSPHSolverWithCollisions::get_timestep()
 {
-    if(PQ->get_useUserDT())
-    {
+   if(PQ->get_useUserDT())
+   {
       dt = user_dt;
       std::cout << "Dt: " << dt << '\n';
       return;
-    }
-    double pdiameter = PQ->get_radius() / 2.0; //particle radius is kernel_radius /4
-    float max_vel = PQ->max_velocity();
-    float lambda = 0.4f;
-    double max_dt;
-    if(max_vel != 0)
-       max_dt = lambda * (pdiameter/max_vel);
-    else max_dt = user_dt;   
+   }
+   double pdiameter = PQ->get_radius() / 2.0; //particle radius is kernel_radius /4
+   float max_vel = PQ->max_velocity();
+   float lambda = 0.4f;
+   double max_dt;
+   if(max_vel != 0)
+      max_dt = lambda * (pdiameter/max_vel);
+   else max_dt = user_dt;   
 
-    dt = max_dt;
-    if(dt > user_dt || dt==0) dt = user_dt; //user_dt dictactes max dt from cfl, change?
-    //return (dt < 0.0001) ? 0.0001 : dt;
+   dt = max_dt;
+   if(dt > user_dt || dt==0) dt = user_dt; //user_dt dictactes max dt from cfl, change?
+   //return (dt < 0.0001) ? 0.0001 : dt;
 
-    //hard coding to clamp between 0.005 and 0.0001, can remove
+   //hard coding to clamp between 0.005 and 0.0001, can remove
    //if(dt > 0.005) dt = 0.005;
    if (dt < 0.0001) dt = 0.0001;
 
-    std::cout << "Dt: " << dt << '\n';
+   std::cout << "Dt: " << dt << '\n';
 
 
 
@@ -676,9 +676,9 @@ void DFSPHSolverWithCollisions::get_timestep()
 
 void DFSPHSolverWithCollisions::advance_velocity()
 {
-#pragma omp parallel for
-    for( size_t i=0;i<PQ->nb();i++ )
-    {    
+   #pragma omp parallel for
+   for( size_t i=0;i<PQ->nb();i++ )
+   {    
       Vector A = PQ->accel(i);
       float Amag = A.magnitude();
       if(Amag > acceleration_clamp)
@@ -702,7 +702,7 @@ void DFSPHSolverWithCollisions::advance_velocity()
 
 void DFSPHSolverWithCollisions::advance_position()
 {
-#pragma omp parallel for
+   #pragma omp parallel for
    for( size_t i=0;i<PQ->nb();i++ )
    {
       PQ->set_pos( i, PQ->pos(i) + PQ->vel(i)*dt );

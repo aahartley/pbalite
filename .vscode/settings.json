@@ -75,6 +75,12 @@
         "DFSPHSolver.C": "cpp",
         "SoftBodyThing.C": "cpp",
         "SoftBodyState.C": "cpp",
-        "Viscosity.C": "cpp"
+        "Viscosity.C": "cpp",
+        "CollisionTriangle.C": "cpp",
+        "ctime": "cpp",
+        "chrono": "cpp",
+        "ratio": "cpp",
+        "BVH.C": "cpp",
+        "Matrix.C": "cpp"
     }
 }

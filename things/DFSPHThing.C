@@ -83,7 +83,7 @@ void DFSPHThing::Init( const std::vector<std::string>& args )
     
 void DFSPHThing::Display() 
 {
-    pba::Display(box);
+    pba::DisplayInfinitePlanes(box);
     // glPointSize(5.0);
     // glBegin(GL_POINTS);
     // for( size_t i=0;i<state->nb();i++ )

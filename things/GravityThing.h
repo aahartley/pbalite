@@ -26,7 +26,7 @@ class GravityThing: public PbaThingyDingy
   public:
 
     // Feel free to customize the name of this thing.
-    GravityThing(const std::string nam = "Gravity Thing");
+    GravityThing(const std::string nam = "Gravity_Thing");
     ~GravityThing();
 
     //! Initialization, including GLUT initialization.
