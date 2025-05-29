@@ -57,17 +57,17 @@ SoftBodyThing::SoftBodyThing(const std::string nam) :
     force = CreateAccumulatingForce();
 
     gravityforce = CreateGravityForce(Vector(0,-9.81f,0));
-    struts = CreateAccumulatingStrutForce(25,5, false);
+    struts = CreateAccumulatingStrutForce(10,0.5, false);
 
     std::shared_ptr<AccumulatingForce> f = dynamic_pointer_cast<AccumulatingForce>(force); 
 	f->add_force(gravityforce);
     f->add_force(struts);
     //GISolver a = CreateAdvancePosition(state);
     GISolver a = CreateAdvancePositionCollSoftBody(state, collisions);
-    GISolver b = CreateAdvanceVelocitySoftBody(state, force);
+    GISolver b = CreateAdvanceVelocitySoftBody(state, force, 1.0e9, 1.0e9);
     GISolver basicsolver = CreateLeapFrogSolver(a,b);
-    //basicsolver = CreateGISolverSixthOrder(basicsolver);
-    solver = CreateGISolverSubstep( basicsolver, 8);
+    basicsolver = CreateGISolverSixthOrder(basicsolver);
+    solver = CreateGISolverSubstep( basicsolver, 2);
     //solver = CreateBackwardEulerSolver(a, b);
     std::cout << name << " constructed\n";
 

@@ -81,6 +81,8 @@
         "chrono": "cpp",
         "ratio": "cpp",
         "BVH.C": "cpp",
-        "Matrix.C": "cpp"
+        "Matrix.C": "cpp",
+        "RigidBodyState.C": "cpp",
+        "RigidBodyThing.C": "cpp"
     }
 }

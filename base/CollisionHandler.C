@@ -28,9 +28,8 @@ void ElasticCollisionHandler::handle_collisions(const double dt, DynamicalState&
     #pragma omp parallel for
     for( size_t i=0;i<PQ->nb();i++ )
     {
-        //todo: fix for when vel updates first with -dt
         Vector V0 = PQ->vel(i); 
-        //get start pos before integration (accounts for negative dt for unintegrated vel)
+        //get start pos before integration (pos up, pos up (-dt), vel up, vel up (-dt))
         Vector X0 = (PQ->pos(i) - V0*dt);
         //coll results
         Vector XR = PQ->pos(i); //end pos (current pos)

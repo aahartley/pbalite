@@ -4,6 +4,7 @@ using namespace pba;
 
 void ExplicitViscosity::compute(DynamicalState& s, const double dt){}
 void ExplicitViscosity::compute(SoftBodyState& s, const double dt){}
+void ExplicitViscosity::compute(RigidBodyState& s, const double dt){}
 
 void ExplicitViscosity::compute(SPHState& s, const double dt)
 {

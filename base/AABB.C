@@ -50,7 +50,7 @@ const Vector& AABB::getBounds(int sign) const
     else return llc;
 }
 
-
+//https://people.csail.mit.edu/amy/papers/box-jgt.pdf
 bool AABB::ray_intersect(const Ray& r, float t0, float t1) const 
 {
     float tmin = (getBounds(r.sign[0]).X() - r.origin.X()) * r.inv_direction.X();

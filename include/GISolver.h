@@ -30,8 +30,17 @@ class BackwardEulerSolver : public GISolverBase
     void init(){a->init(); b->init();}
     void solve(const double dt)
     {
+      if(dt >= 0)
+      {
         b->solve(dt);
         a->solve(dt);
+      }
+      else
+      {
+        //not use negative future vel for postion update, update pos first for -dt
+        a->solve(dt);
+        b->solve(dt);
+      }
     }
   private:
     GISolver a;

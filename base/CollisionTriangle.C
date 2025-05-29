@@ -47,7 +47,7 @@ void CollisionTriangleRaw::compute_normal()
    
 bool CollisionTriangleRaw::hit( const Vector& X0, const Vector& Xu, const Vector& V, const double dt, Vector& XH_cand, double& dtH_cand, float rad) const
 {
-    Vector effectiveV = (dt >= 0) ? V : -V;
+    Vector effectiveV = V;
 
     bool hit = false;
     float fx0 = normal * ((X0) - v0);
@@ -57,7 +57,8 @@ bool CollisionTriangleRaw::hit( const Vector& X0, const Vector& Xu, const Vector
     if (V*V < 1.0e-12) return hit; // no motion, no collision
 
     // Check collision for forward/backward motion
-    bool approaching = (vn < 0 && dt >= 0) || (vn > 0 && dt < 0);
+    bool approaching = (dt >= 0) ? (vn < 0) : (vn > 0);
+    //init penetration , prevent tunneling
     if (fx0 <= 0.0f && approaching) 
     {
         dtH_cand = 0;
@@ -68,8 +69,9 @@ bool CollisionTriangleRaw::hit( const Vector& X0, const Vector& Xu, const Vector
     else if((fxu == 0 || fx0 * fxu < 0 ))/*|| (fxu <=0 && fx0 <=0)*/ hit = true;
     if(hit)// plane of tri hit, eval barycentric coords
     {
-        float nv = normal * effectiveV;
-        if (std::abs(nv) < 1e-6) nv = (dt >= 0) ? 1e-6 : -1e-6;
+        float nv = normal * V;  // Use real velocity (no flipping)
+        if (std::abs(nv) < 1e-6) nv = (V * normal < 0) ? -1e-6 : 1e-6;
+        
         XH_cand = X0 + effectiveV * ( (normal * (v0 - X0)) / nv );
         dtH_cand = (normal * (v0-X0)) / nv; // (positive dt results: should be <= dt )
       
@@ -96,7 +98,7 @@ void CollisionTriangleRaw::handle(const Vector& XS, const Vector& VS, const doub
     const Vector& XH, const double& dtH, Vector& XR, Vector& VR, float cs, float cr) const
 {
     VR = (cs * VS) - ((cs + cr) * normal * (normal * VS));
-    double remaining_dt = (dt >= 0) ? (dt - dtH) : (dtH - dt);
+    double remaining_dt =  (dt - dtH);
     XR = XH + VR * remaining_dt;
 }
 CollisionTriangle pba::makeCollisionTriangle(  const Vector& p0, const Vector& p1, const Vector& p2 )

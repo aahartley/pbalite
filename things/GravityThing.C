@@ -63,7 +63,7 @@ GravityThing::GravityThing(const std::string nam) :
 	f->add_force(gravityforce);
     //GISolver a = CreateAdvancePosition(state);
     GISolver a = CreateAdvancePositionColl(state, collisions);
-    GISolver b = CreateAdvanceVelocity(state, force);
+    GISolver b = CreateAdvanceVelocity(state, force, 1.0e9, 1.0e9);
     solver = CreateForwardEulerSolver(a, b);
     std::cout << name << " constructed\n";
 
@@ -137,20 +137,20 @@ void GravityThing::Keyboard( unsigned char key, int x, int y )
     if( key == 'l' )
     {
         GISolver solvera = CreateAdvancePositionColl( state, collisions );
-        GISolver solverb = CreateAdvanceVelocity(state,force);
+        GISolver solverb = CreateAdvanceVelocity(state,force, 1.0e9, 1.0e9);
         solver = CreateLeapFrogSolver(solvera,solverb);
         std::cout << "Using Leap Frog solver" << std::endl;
     }
     if( key == 'n' )
     {
         GISolver solvera = CreateAdvancePositionColl( state, collisions );
-        GISolver solverb = CreateAdvanceVelocity(state,force);
+        GISolver solverb = CreateAdvanceVelocity(state,force, 1.0e9, 1.0e9);
         solver = CreateForwardEulerSolver(solvera,solverb); // forward
    std::cout << "Using Forward Euler solver" << std::endl;
     }
     if( key == 'b' )
     {
-        GISolver solverb = CreateAdvanceVelocity(state,force);
+        GISolver solverb = CreateAdvanceVelocity(state,force, 1.0e9, 1.0e9);
         GISolver solvera = CreateAdvancePositionColl( state, collisions );
         solver = CreateForwardEulerSolver(solverb,solvera); //backward
         std::cout << "Using Backward Euler solver" << std::endl;

@@ -11,6 +11,7 @@ SoftEdge pba::CreateSoftEdge( const size_t i, const size_t j, const double edgel
 SoftBodyStateData::SoftBodyStateData( const std::string& nam) :
   DynamicalStateData(nam+"SoftBodyStateData")
 {
+    create_attr("pin", false);
 
 }
 

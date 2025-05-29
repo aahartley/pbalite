@@ -26,6 +26,14 @@ void GravityForce::compute(SoftBodyState& s, const double dt)
       s->set_accel(p, s->accel(p) + gravity);
   }
 }
+void GravityForce::compute(RigidBodyState& s, const double dt)
+{
+  #pragma omp parallel for
+  for(size_t p=0; p<s->nb(); p++)
+  {
+      s->set_accel(p, s->accel(p) + gravity);
+  }
+}
 
 void TaitPressureForce::compute(DynamicalState& s, const double dt)
 {
@@ -61,6 +69,10 @@ void TaitPressureForce::compute(SoftBodyState& s, const double dt)
 {
   std::cout << "not fluid\n";
 }
+void TaitPressureForce::compute(RigidBodyState& s, const double dt)
+{
+  std::cout << "not fluid\n";
+}
 
 void HarmonicOscillatorForce::compute(DynamicalState& s, const double dt)
 {
@@ -79,6 +91,14 @@ void HarmonicOscillatorForce::compute(SPHState& s, const double dt)
     }
 }
 void HarmonicOscillatorForce::compute(SoftBodyState& s, const double dt)
+{
+    #pragma omp parallel for
+    for(size_t p=0; p<s->nb(); p++)
+    {
+        s->set_accel(p, s->accel(p) - Kd * s->pos(p) / s->mass(p));
+    }
+}
+void HarmonicOscillatorForce::compute(RigidBodyState& s, const double dt)
 {
     #pragma omp parallel for
     for(size_t p=0; p<s->nb(); p++)
@@ -123,9 +143,22 @@ void AccumulatingForce::compute(SoftBodyState& s, const double dt)
         forces[p]->compute(s,dt);
     }
 }
+void AccumulatingForce::compute(RigidBodyState& s, const double dt)
+{
+    #pragma omp parallel for
+    for(size_t p=0; p<s->nb(); p++)
+    {
+        s->set_accel(p, Vector(0,0,0)); // initialize accelerations to zero before we start accumulating
+    }
+    for(size_t p=0; p<forces.size(); p++)
+    {
+        forces[p]->compute(s,dt);
+    }
+}
 
 void AccumulatingStrutForce::compute( DynamicalState& s, const double dt ){}
 void AccumulatingStrutForce::compute( SPHState& s, const double dt ){}
+void AccumulatingStrutForce::compute( RigidBodyState& s, const double dt ){}
 void AccumulatingStrutForce::compute( SoftBodyState& s, const double dt )
 {
   #pragma omp parallel for

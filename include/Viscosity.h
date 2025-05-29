@@ -4,6 +4,7 @@
 #include "DynamicalState.h"
 #include "SPHState.h"
 #include "SoftBodyState.h"
+#include "RigidBodyState.h"
 #include <memory>
 #include "Force.h"
 namespace pba
@@ -18,6 +19,7 @@ class ExplicitViscosity : public ForceBase
     void compute(DynamicalState& s, const double dt);
     void compute(SPHState& s, const double dt);
     void compute(SoftBodyState& s, const double dt);
+    void compute(RigidBodyState& s, const double dt);
     void set_visc(const float kv){dynamic_viscosity=kv;}
     const float get_visc() const{return dynamic_viscosity;}
   private:

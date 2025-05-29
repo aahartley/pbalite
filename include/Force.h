@@ -4,6 +4,7 @@
 #include "DynamicalState.h"
 #include "SPHState.h"
 #include "SoftBodyState.h"
+#include "RigidBodyState.h"
 #include <memory>
 
 namespace pba
@@ -16,6 +17,7 @@ class ForceBase
     virtual void compute(DynamicalState& s, const double dt) = 0;
     virtual void compute(SPHState& s, const double dt) = 0;
     virtual void compute(SoftBodyState& s, const double dt) = 0;
+    virtual void compute(RigidBodyState& s, const double dt) = 0;
 
     virtual ~ForceBase(){};
 };

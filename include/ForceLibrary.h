@@ -4,6 +4,7 @@
 #include "DynamicalState.h"
 #include "SPHState.h"
 #include "SoftBodyState.h"
+#include "RigidBodyState.h"
 #include "Force.h"
 #include <memory>
 
@@ -19,6 +20,8 @@ class GravityForce : public ForceBase
     void compute(DynamicalState& s, const double dt);
     void compute(SPHState& s, const double dt);
     void compute(SoftBodyState& s, const double dt);
+    void compute(RigidBodyState& s, const double dt);
+
     void set_gravity(const Vector& g){gravity=g;}
     const Vector& get_gravity() const{return gravity;}
   private:
@@ -37,6 +40,7 @@ class TaitPressureForce : public ForceBase
     void compute(DynamicalState& s, const double dt);
     void compute(SPHState& s, const double dt);
     void compute(SoftBodyState& s, const double dt);
+    void compute(RigidBodyState& s, const double dt);
     void set_strenth(const float s){strength=s;}
     const float get_strength() const{return strength;}
     void set_rho0(const float s){rho_0=s;}
@@ -60,6 +64,7 @@ class HarmonicOscillatorForce : public ForceBase
     void compute(DynamicalState& s, const double dt);
     void compute(SPHState& s, const double dt);
     void compute(SoftBodyState& s, const double dt);
+    void compute(RigidBodyState& s, const double dt);
     // set and gets to be able to change the force strength
     void set_kd(const double& v){ Kd = v; }
     const double& get_kd() const { return Kd; }
@@ -81,6 +86,7 @@ class AccumulatingForce : public ForceBase
     void compute(DynamicalState& s, const double dt);
     void compute(SPHState& s, const double dt);
     void compute(SoftBodyState& s, const double dt);
+    void compute(RigidBodyState& s, const double dt);
     // Build up the collection of forces to accumulate
     void add_force(Force& f);
   private:
@@ -95,6 +101,7 @@ class AccumulatingStrutForce : public pba::ForceBase
     void compute(DynamicalState& s, const double dt);
     void compute(SPHState& s, const double dt);
     void compute( SoftBodyState& pq, const double dt );
+    void compute(RigidBodyState& s, const double dt);
   private:
     double spring;
     double friction;

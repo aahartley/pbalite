@@ -13,38 +13,34 @@ namespace pba
 {
 
 
-// class WCSPHSolver : public GISolverBase
-// {
-//   public:
-//     WCSPHSolver(SPHState& pq, Force& f, double vclamp, double aclamp);
-//     ~WCSPHSolver(){}
+class WCSPHSolver : public GISolverBase
+{
+  public:
+    WCSPHSolver(SPHState& pq, Force& f, GISolver& sol);
+    ~WCSPHSolver(){}
     
-//     void init();
-//     void solve(const double dt);
+    void init();
+    void solve(const double dt);
 
-//     void advance_velocity();
-//     void advance_position();
-//     void correct_density_error();
-//     void correct_divergence_error();
-//     void get_timestep();
+    void get_timestep();
 
-//   private:
-//     SPHState PQ;
-//     Force force;
-//     float velocity_clamp;
-//     float acceleration_clamp;
-//     float dt;
+  private:
+    SPHState PQ;
+    Force force;
+    GISolver solver;
+    float user_dt;
+    float dt;
 
 
-// };
+};
 
-// GISolver CreateWCSPHSolver( SPHState& pq, Force& f, float vel_clamp, float accel_clamp );
+GISolver CreateWCSPHSolver( SPHState& pq, Force& f, GISolver& sol );
 
 
 class WCSPHSolverWithCollisions : public GISolverBase
 {
   public:
-    WCSPHSolverWithCollisions(SPHState& pq, Force& f, double vclamp, double aclamp, ElasticCollisionHandler& coll, GISolver& sol);
+    WCSPHSolverWithCollisions(SPHState& pq, Force& f, ElasticCollisionHandler& coll, GISolver& sol);
     ~WCSPHSolverWithCollisions(){}
     
     void init();
@@ -52,11 +48,7 @@ class WCSPHSolverWithCollisions : public GISolverBase
 
     void get_timestep();
 
-    const float get_velocity_clamp() const { return velocity_clamp; }
-    void set_velocity_clamp(const float& v ) { velocity_clamp = v; }
 
-    const float get_acceleration_clamp() const { return acceleration_clamp; }
-    void set_acceleration_clamp(const float& v ) { acceleration_clamp = v; }
 
 
   private:
@@ -64,15 +56,13 @@ class WCSPHSolverWithCollisions : public GISolverBase
     Force force;
     ElasticCollisionHandler& CS;
     GISolver solver;
-    float velocity_clamp;
-    float acceleration_clamp;
     float user_dt;
     float dt;
 
 
 };
 
-GISolver CreateWCSPHSolver( SPHState& pq, Force& f, float vel_clamp, float accel_clamp, ElasticCollisionHandler& cs, GISolver& sol );
+GISolver CreateWCSPHSolver( SPHState& pq, Force& f, ElasticCollisionHandler& cs, GISolver& sol );
 
 
 

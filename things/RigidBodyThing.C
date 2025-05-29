@@ -1,0 +1,227 @@
+
+
+#include "RigidBodyThing.h"
+#include <cstdlib>
+#include <GL/gl.h>   // OpenGL itself.
+#include <GL/glu.h>  // GLU support library.
+#include <GL/glut.h> // GLUT support library.
+#include <iostream>
+
+
+
+using namespace std;
+
+using namespace pba;
+
+
+
+
+
+RigidBodyThing::RigidBodyThing(const std::string nam) :
+ PbaThingyDingy (nam),
+ emit       (false)
+{
+    box = makeCollisionSurface();
+    bvh = makeBVH(Vector(-3,-3,-3), Vector(3,3,3), 0, 20, 1);
+    pba::CreateCube(box, 2, 0.5, 2);
+    bvh->addObject(box);
+    bvh->Divide();
+    //pba::CreateInfiniteCube(box, 2, 1, 2);
+    AddCollisionSurface(box);
+    state = CreateRigidBodyState("SoftBody");
+    Reset();
+    // int inc = 2;
+    // state->add(inc);
+    // state->set_num_pairs(1);
+    std::cout << "Emit: Total Points " << state->nb() << std::endl;
+    emitter = ParticleEmitter();
+  
+    // Vector p(0,2.9,0);
+    // Vector v(0,0,0);
+    // Color c(0,0,1,1);
+    // state->set_pos(0,p);
+    // state->set_vel(0,v);
+    // state->set_ci(0,c);
+    // state->set_rad(0, 0.5f); //0.075
+
+    // state->set_pos(1,Vector(0,2.7,0));
+    // state->set_vel(1,v);
+    // state->set_ci(1,c);
+    // state->set_rad(1, 0.5f); //0.075
+    // state->add_pair(0,1,0);
+    verts.resize(1); tris.resize(1);
+    //GeoToSoftBody(verts[0], tris[0], "models/bunny_superlo_scaled.obj", state);
+    //GeoToSoftBody("models/bunny_lo_scaled.obj", state);
+
+    //std::cout << state->nb_pairs() << '\n';
+    force = CreateAccumulatingForce();
+
+    gravityforce = CreateGravityForce(Vector(0,-9.81f,0));
+    struts = CreateAccumulatingStrutForce(10,0.5, false);
+
+    std::shared_ptr<AccumulatingForce> f = dynamic_pointer_cast<AccumulatingForce>(force); 
+	f->add_force(gravityforce);
+    f->add_force(struts);
+    //GISolver a = CreateAdvancePosition(state);
+    GISolver a = CreateAdvancePositionCollRigidBody(state, collisions);
+    GISolver b = CreateAdvanceVelocityRigidBody(state, force, 1.0e9, 1.0e9);
+    GISolver basicsolver = CreateLeapFrogSolver(a,b);
+    basicsolver = CreateGISolverSixthOrder(basicsolver);
+    solver = CreateGISolverSubstep( basicsolver, 2);
+    //solver = CreateBackwardEulerSolver(a, b);
+    std::cout << name << " constructed\n";
+
+}
+
+RigidBodyThing::~RigidBodyThing(){}
+
+void RigidBodyThing::Init( const std::vector<std::string>& args ) 
+{
+    SetSimulationTimestep(0.005);
+}
+    
+void RigidBodyThing::Display() 
+{
+    pba::Display(box);
+    // glPointSize(5.0);
+    // glBegin(GL_POINTS);
+    // for( size_t i=0;i<state->nb();i++ )
+    // {
+    //     const Vector& P = state->pos(i);
+    //     const Color& ci = state->ci(i);
+    //     glColor3f( ci.red(), ci.green(), ci.blue() );
+    //     glVertex3f( P.X(), P.Y(), P.Z() );
+    // }
+    // glEnd();
+    glBegin(GL_TRIANGLES);
+    for(size_t j = 0; j < tris.size(); j++)
+    {
+        for( size_t i = 0; i < tris[j].size(); i++ )
+        {
+            const Vector& v1 = state->pos(tris[j][i].v1);
+            const Vector& v2 = state->pos(tris[j][i].v2);
+            const Vector& v3 = state->pos(tris[j][i].v3);
+
+            const Color& ci = Color(0,0,1,1);
+            glColor3f( ci.red(), ci.green(), ci.blue() );
+            glVertex3f( v1.X(), v1.Y(), v1.Z() );
+            glVertex3f( v2.X(), v2.Y(), v2.Z() );
+            glVertex3f( v3.X(), v3.Y(), v3.Z() );
+
+        }
+    }
+    glEnd();
+}
+
+void RigidBodyThing::Keyboard( unsigned char key, int x, int y )
+{
+    PbaThingyDingy::Keyboard(key,x,y);
+    if( key == 'v' ){ box->toggle_visible(); }
+    if( key == 'w' ){ box->toggle_wireframe(); }
+    if( key == 'e' ){ emit = !emit; }
+    if( key == 'z' )
+    {
+        std::shared_ptr<GravityForce> f = dynamic_pointer_cast<GravityForce>(gravityforce); 
+        Vector wind = f->get_gravity() + Vector(2,0,0);
+        f->set_gravity(wind );
+    }
+    if( key == 'g' )
+    {
+        std::shared_ptr<GravityForce> f = dynamic_pointer_cast<GravityForce>(gravityforce); 
+        f->set_gravity(f->get_gravity()/1.1);
+        
+    }
+    if( key == 'G' )
+    { 
+        std::shared_ptr<GravityForce> f = dynamic_pointer_cast<GravityForce>(gravityforce); 
+        f->set_gravity( f->get_gravity()*1.1 );
+    }
+    if( key == 'c' )
+    {
+        box->set_coeff_restitution( box->coeff_restitution()/1.1 );
+        std::cout << "coefficient of restituion: " << box->coeff_restitution() << std::endl;
+    }
+    if( key == 'C' )
+    { 
+        box->set_coeff_restitution( box->coeff_restitution()*1.1 );
+        std::cout << "coefficient of restituion: " << box->coeff_restitution() << std::endl;
+    }
+    if( key == 's' )
+    {
+        box->set_coeff_sticky( box->coeff_sticky()/1.1 );
+        std::cout << "coefficient of sticky: " << box->coeff_sticky() << std::endl;
+    }
+    if( key == 'S' )
+    { 
+        box->set_coeff_sticky( box->coeff_sticky()*1.1 );
+        std::cout << "coefficient of sticky: " << box->coeff_sticky() << std::endl;
+    }
+//     if( key == 'l' )
+//     {
+//         GISolver solvera = CreateAdvancePositionColl( state, collisions );
+//         GISolver solverb = CreateAdvanceVelocity(state,force);
+//         solver = CreateLeapFrogSolver(solvera,solverb);
+//         std::cout << "Using Leap Frog solver" << std::endl;
+//     }
+//     if( key == 'n' )
+//     {
+//         GISolver solvera = CreateAdvancePositionColl( state, collisions );
+//         GISolver solverb = CreateAdvanceVelocity(state,force);
+//         solver = CreateForwardEulerSolver(solvera,solverb); // forward
+//    std::cout << "Using Forward Euler solver" << std::endl;
+//     }
+//     if( key == 'b' )
+//     {
+//         GISolver solverb = CreateAdvanceVelocity(state,force);
+//         GISolver solvera = CreateAdvancePositionColl( state, collisions );
+//         solver = CreateForwardEulerSolver(solverb,solvera); //backward
+//         std::cout << "Using Backward Euler solver" << std::endl;
+//     }
+
+}
+
+
+void RigidBodyThing::solve()
+{
+    if(emit)
+    {
+        //emitter.emitCube(state, 6, Vector(0,0,0));
+    }
+    solver->solve(dt);
+}
+
+void RigidBodyThing::Reset()
+{
+    state->clear();
+}
+
+void RigidBodyThing::Usage()
+{
+   PbaThingyDingy::Usage();
+   cout << "=== " << name << " ===\n";
+   cout << "v            toggle visibility of collision surface\n";
+   cout << "w            toggle wireframe/solid display of collision surface\n";
+   cout << "g/G          reduce/increase gravityy \n";
+   cout << "e            toggle particle emission on/off\n";
+   cout << "c/C          reduce/increase coefficient of restitution\n";
+   cout << "s/S          reduce/increase coefficient of sticky\n";
+   cout << "l            use leap frog solver\n";
+   cout << "n            use forward euler solver\n";
+   cout << "b            use backward euler solver\n";
+}
+
+void RigidBodyThing::AddCollisionSurface(pba::CollisionSurface& s)
+{
+    std::cout << "Add CollisionSurface\n";
+    box = s;
+    s->set_coeff_restitution(0.5);
+    //s->set_coeff_sticky(0.1);
+    collisions.set_collision_surface(box);
+    collisions.set_bvh(bvh);
+    //collisions.dont_use_bvh();
+}
+
+
+pba::PbaThing pba::CreateRigidBodyThing(){ return PbaThing( new RigidBodyThing() ); }
+
+

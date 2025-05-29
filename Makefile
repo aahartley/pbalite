@@ -6,7 +6,8 @@ OFILES = base/PbaViewer.o \
          base/Matrix.o \
 		 base/AABB.o \
 		 base/SPHState.o \
-		 base/SoftBodyState.o\
+		 base/SoftBodyState.o \
+		 base/RigidBodyState.o \
 		 base/NeighborSearch.o \
          base/LinearAlgebra.o \
 	 	 base/ScreenCapturePPM.o \
@@ -26,8 +27,9 @@ OFILES = base/PbaViewer.o \
 	 	 things/MyThing.o \
 		 things/GravityThing.o \
 		 things/WCSPHThing.o \
-		 things/DFSPHThing.o\
-		 things/SoftBodyThing.o\
+		 things/DFSPHThing.o \
+		 things/SoftBodyThing.o \
+		 things/RigidBodyThing.o \
 
 
 

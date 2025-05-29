@@ -58,7 +58,11 @@ class DSAttribute
     std::string name;
     T defVal;
 };
-
+enum IntegrationStage {
+    NONE            ,      
+    VELOCITY_UPDATED,
+    POSITION_UPDATED
+};
 class DynamicalStateData
 {
   public:
@@ -105,6 +109,8 @@ class DynamicalStateData
 
     const std::string& Name() const { return name; }
     void re_find_main_attrs();
+    void set_stage(const IntegrationStage& s){stage = s;}
+    const IntegrationStage& get_stage(){return stage;}
 
     int erase_outside_bounds( const Vector& llc, const Vector& urc );
 
@@ -114,6 +120,7 @@ class DynamicalStateData
     std::string name;
     double time;
     size_t nb_items;
+    IntegrationStage stage;
 
     std::map< std::string, DSAttribute<int> > int_attributes;
     std::map< std::string, DSAttribute<float> > float_attributes;

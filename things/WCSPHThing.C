@@ -69,9 +69,9 @@ WCSPHThing::WCSPHThing(const std::string nam) :
     f->add_force(viscosity);
     f->add_force(pressure_force);
     GISolver a = CreateAdvancePositionCollSPH(state, collisions);
-    GISolver b = CreateAdvanceVelocitySPH(state, force);
+    GISolver b = CreateAdvanceVelocitySPH(state, force, 1.0e9, 1.0e9);
     GISolver b_euler = CreateBackwardEulerSolver(a, b);
-    solver = CreateWCSPHSolver(state, force, 0,0, collisions, b_euler);
+    solver = CreateWCSPHSolver(state, force, b_euler);
     std::cout << name << " constructed\n";
 
 }

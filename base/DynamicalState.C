@@ -5,7 +5,8 @@ using namespace pba;
 DynamicalStateData::DynamicalStateData(const std::string& nam) :
  name(nam),
  time(0.0),
- nb_items(0)
+ nb_items(0),
+ stage(NONE)
 {
     // create standard set of attributes:
     //   id, pos, vel, accel, ci, mass

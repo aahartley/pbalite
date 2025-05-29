@@ -66,10 +66,10 @@ DFSPHThing::DFSPHThing(const std::string nam) :
     std::shared_ptr<AccumulatingForce> f = dynamic_pointer_cast<AccumulatingForce>(force); 
 	f->add_force(gravityforce);
     f->add_force(viscosity);
-    GISolver a = CreateAdvancePositionCollSPH(state, collisions);
-    GISolver b = CreateAdvanceVelocitySPH(state, force);
-    GISolver b_euler = CreateBackwardEulerSolver(a, b);
-    solver = CreateDFSPHSolver(state, force, 1000,1000, collisions);
+    // GISolver a = CreateAdvancePositionCollSPH(state, collisions);
+    // GISolver b = CreateAdvanceVelocitySPH(state, force, 1.0e9, 1.0e9);
+    // GISolver b_euler = CreateBackwardEulerSolver(a, b);
+    solver = CreateDFSPHSolver(state, force, 1.0e9, 1.0e9, collisions);
     std::cout << name << " constructed\n";
 
 }
