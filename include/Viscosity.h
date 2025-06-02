@@ -1,31 +1,42 @@
+//*******************************************************************
+//
+//   Viscosity.h
+//
+//  Viscosities for SPH
+//
+//
+//
+//*******************************************************************
+
 #ifndef __PBA_VISCOSITY_H__
 #define __PBA_VISCOSITY_H__
 
-#include "DynamicalState.h"
 #include "SPHState.h"
-#include "SoftBodyState.h"
-#include "RigidBodyState.h"
-#include <memory>
 #include "Force.h"
+
+#include <memory>
+
 namespace pba
 {
-class ExplicitViscosity : public ForceBase
+//SPH SURVERY 2019 & 2022  
+class ExplicitViscosity : public ForceBase<SPHStateData>
 {
   public:
-    ExplicitViscosity(const float kv):
-      dynamic_viscosity (kv)
-    {}
+    ExplicitViscosity(float dv)
+      : dynamic_viscosity_(dv) {}
     ~ExplicitViscosity(){}
-    void compute(DynamicalState& s, const double dt);
-    void compute(SPHState& s, const double dt);
-    void compute(SoftBodyState& s, const double dt);
-    void compute(RigidBodyState& s, const double dt);
-    void set_visc(const float kv){dynamic_viscosity=kv;}
-    const float get_visc() const{return dynamic_viscosity;}
+    void Compute(SPHStateData& s, double dt);
+
+    void set_visc(float kv)  {dynamic_viscosity_ = kv; }
+    float get_visc() const { return dynamic_viscosity_; }
   private:
-    float dynamic_viscosity; 
+    float dynamic_viscosity_; 
 };
-pba::Force CreateExplicitViscosity(const float kv);
+
+inline ForceSPHPtr CreateExplicitViscosity(float dv)
+{
+  return std::make_unique<ExplicitViscosity>(dv);
+}
 
 }
 

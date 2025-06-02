@@ -71,15 +71,17 @@ class WCSPHThing: public PbaThingyDingy
 
     // flag for whether to create more particles
     bool emit;
-    SPHState state;
-    GISolver solver;
-    Force force;
-    Force gravityforce;
-    Force pressure_force;
-    Force viscosity;
+    SPHStatePtr state;
+    GISolverPtr a;
+    GISolverPtr b;
+    GISolverPtr solver;
+    ForceSPHPtr force;
+    ForceSPHPtr gravityforce;
+    ForceSPHPtr pressure_force;
+    ForceSPHPtr viscosity;
  
     ElasticCollisionHandler collisions;
-    CollisionSurface box;
+    CollisionSurfacePtr box;
     ParticleEmitter emitter;
 
 };

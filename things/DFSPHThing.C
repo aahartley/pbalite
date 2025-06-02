@@ -21,23 +21,12 @@ DFSPHThing::DFSPHThing(const std::string nam) :
  PbaThingyDingy (nam),
  emit       (false)
 {
-    box = makeCollisionSurface();
+    box = CreateCollisionSurface();
     float x = 0.3;
     float y = 0.7;
     float z = 0.3;
-    CollisionInfinitePlane bottom(Vector(0,1,0),Vector(0,-y,0));
-    CollisionInfinitePlane top(Vector(0,-1,0),Vector(0,y,0));
-    CollisionInfinitePlane right(Vector(-1,0,0),Vector(x,0,0));
-    CollisionInfinitePlane left(Vector(1,0,0),Vector(-x,0,0));
-    CollisionInfinitePlane front(Vector(0,0,-1),Vector(0,0,z)); //closest to screen
-    CollisionInfinitePlane back(Vector(0,0,1),Vector(0,0,-z)); //(z points to screen)
-    box->addPlane(bottom);
-    box->addPlane(top);
-    box->addPlane(right);
-    box->addPlane(left);
-    box->addPlane(back);
-    box->addPlane(front);
-    AddCollisionSurface(box);
+    pba::CreateCube(*box, x, y, z);
+    AddCollisionSurface(*box);
     state = CreateSPH(AABB(Vector(-5,-5,-5), Vector(5,5,5)), 0.1, "DFSPHState");
     Reset();
     // int inc = 1;
@@ -58,18 +47,18 @@ DFSPHThing::DFSPHThing(const std::string nam) :
 
     // }
 
-    force = CreateAccumulatingForce();
+    force = CreateAccumulatingForce<SPHStateData>();
 
-    gravityforce = CreateGravityForce(Vector(0,-9.81f,0));
+    gravityforce = CreateGravityForce<SPHStateData>(Vector(0,-9.81f,0));
     viscosity = CreateExplicitViscosity(0.01);
 
-    std::shared_ptr<AccumulatingForce> f = dynamic_pointer_cast<AccumulatingForce>(force); 
-	f->add_force(gravityforce);
-    f->add_force(viscosity);
+    AccumulatingForce<SPHStateData>* f = dynamic_cast<AccumulatingForce<SPHStateData>*>(force.get()); 
+	f->AddForce(gravityforce.get());
+    f->AddForce(viscosity.get());
     // GISolver a = CreateAdvancePositionCollSPH(state, collisions);
     // GISolver b = CreateAdvanceVelocitySPH(state, force, 1.0e9, 1.0e9);
     // GISolver b_euler = CreateBackwardEulerSolver(a, b);
-    solver = CreateDFSPHSolver(state, force, 1.0e9, 1.0e9, collisions);
+    solver = CreateDFSPHSolver(*state, *force, &collisions, 1.0e9, 1.0e9);
     std::cout << name << " constructed\n";
 
 }
@@ -83,7 +72,7 @@ void DFSPHThing::Init( const std::vector<std::string>& args )
     
 void DFSPHThing::Display() 
 {
-    pba::DisplayInfinitePlanes(box);
+    pba::DisplayInfinitePlanes(box.get());
     // glPointSize(5.0);
     // glBegin(GL_POINTS);
     // for( size_t i=0;i<state->nb();i++ )
@@ -114,19 +103,19 @@ void DFSPHThing::Keyboard( unsigned char key, int x, int y )
     if( key == 'e' ){ emit = !emit; }
     if( key == 'z' )
     {
-        std::shared_ptr<GravityForce> f = dynamic_pointer_cast<GravityForce>(gravityforce); 
+        auto* f = dynamic_cast<GravityForce<SPHStateData>*>(gravityforce.get()); 
         Vector wind = f->get_gravity() + Vector(2,0,0);
         f->set_gravity(wind );
     }
     if( key == 'g' )
     {
-        std::shared_ptr<GravityForce> f = dynamic_pointer_cast<GravityForce>(gravityforce); 
+        auto* f = dynamic_cast<GravityForce<SPHStateData>*>(gravityforce.get()); 
         f->set_gravity(f->get_gravity()/1.1);
         
     }
     if( key == 'G' )
     { 
-        std::shared_ptr<GravityForce> f = dynamic_pointer_cast<GravityForce>(gravityforce); 
+        auto* f = dynamic_cast<GravityForce<SPHStateData>*>(gravityforce.get()); 
         f->set_gravity( f->get_gravity()*1.1 );
     }
     if( key == 'c' )
@@ -178,16 +167,16 @@ void DFSPHThing::solve()
 {
     if(emit)
     {
-        emitter.emitCube(state, 6, Vector(0,0,0));
+        emitter.emitCube(*state, 6, Vector(0,0,0));
         emit = false;
     }
-    solver->solve(dt);
-    state->erase_outside_bounds(Vector(-5,-5,-5), Vector(5,5,5));
+    solver->Solve(dt);
+    state->EraseOutsideOfBounds(Vector(-5,-5,-5), Vector(5,5,5));
 }
 
 void DFSPHThing::Reset()
 {
-    state->clear();
+    state->Clear();
 }
 
 void DFSPHThing::Usage()
@@ -205,13 +194,16 @@ void DFSPHThing::Usage()
    cout << "b            use backward euler solver\n";
 }
 
-void DFSPHThing::AddCollisionSurface(pba::CollisionSurface& s)
+void DFSPHThing::AddCollisionSurface(CollisionSurface& s)
 {
     std::cout << "Add CollisionSurface\n";
-    box = s;
-    s->set_coeff_restitution(0.5);
-    s->set_coeff_sticky(0.9);
-    collisions.set_collision_surface(box);
+    if(box == nullptr)
+    {
+        box = std::make_unique<CollisionSurface>(s);
+    }
+    s.set_coeff_restitution(0.5);
+    //s->set_coeff_sticky(0.1);
+    collisions.set_collision_surface(box.get());
 }
 
 

@@ -6,29 +6,22 @@
 #include "PbaThing.h"
 #include "SoftBodyState.h"
 #include "ObjLoader.h"
-#include <iostream>
 
 
-using namespace std;
-
-namespace pba{
-
+namespace pba
+{
 
 // void AddCollisionSurface( pba::CollisionSurface& s, pba::PbaThing& p ); 
-void CreateInfiniteCube(pba::CollisionSurface& s, double x, double y, double z );
-void CreateCube(pba::CollisionSurface& s, double x, double y, double z);
+void CreateInfiniteCube(CollisionSurface& s, double x, double y, double z);
+void CreateCube(CollisionSurface& s, double x, double y, double z);
 
-void DisplayInfinitePlanes( pba::CollisionSurface& s );
-void Display( pba::CollisionSurface& s );
-
-
-void GeoToSoftBody(std::vector<Vector>& verts, std::vector<Triangle>& tris, const std::string& file, SoftBodyState& s );
+void DisplayInfinitePlanes(CollisionSurface* s);
+void Display(CollisionSurface* s);
 
 
+void GeoToSoftBody(std::vector<Vector>& verts, std::vector<Triangle>& tris, const std::string& file, SoftBodyStateData& s);
 
-
-};
-
+}
 
 #endif
 

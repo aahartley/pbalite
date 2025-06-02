@@ -1,220 +1,209 @@
+//*******************************************************************
+//
+//   ForceLibrary.C
+//
+//   Library of forces for different states.
+//
+//
+//
+//*******************************************************************
+
 #include "ForceLibrary.h"
 
-using namespace pba;
+namespace pba
+{
 
-void GravityForce::compute(DynamicalState& s, const double dt)
+template<typename StateType>
+void GravityForce<StateType>::Compute(StateType& s, const double dt)
 {
   #pragma omp parallel for
-  for(size_t p=0; p<s->nb(); p++)
+  for (size_t p = 0; p < s.nb(); ++p)
   {
-      s->set_accel(p, s->accel(p) + gravity);
-  }
-}
-void GravityForce::compute(SPHState& s, const double dt)
-{
-  #pragma omp parallel for
-  for(size_t p=0; p<s->nb(); p++)
-  {
-      s->set_accel(p, s->accel(p) + gravity);
-  }
-}
-void GravityForce::compute(SoftBodyState& s, const double dt)
-{
-  #pragma omp parallel for
-  for(size_t p=0; p<s->nb(); p++)
-  {
-      s->set_accel(p, s->accel(p) + gravity);
-  }
-}
-void GravityForce::compute(RigidBodyState& s, const double dt)
-{
-  #pragma omp parallel for
-  for(size_t p=0; p<s->nb(); p++)
-  {
-      s->set_accel(p, s->accel(p) + gravity);
+      s.set_accel(p, s.accel(p) + gravity_);
   }
 }
 
-void TaitPressureForce::compute(DynamicalState& s, const double dt)
-{
-  std::cout << "not fluid\n";
-}
-void TaitPressureForce::compute(SPHState& s, const double dt)
+void TaitPressureForce::Compute(SPHStateData& s, const double dt)
 {
   #pragma omp parallel for
-  for(size_t p=0; p<s->nb(); p++)
+  for (size_t p = 0; p < s.nb(); ++p)
   {
     Vector pressure;
-    const Vector P = s->pos(p);
+    const Vector& pos = s.pos(p);
     std::vector<size_t> neighbors;
-    s->neighbors_list(neighbors, P, s->get_neighborParallel());
-    float dens_a = s->get_float_attr("density",p);
-    dens_a = std::fmax(dens_a, s->get_density0());
-    for(size_t a = 0; a < neighbors.size(); a++)
+    s.neighbors_list(neighbors, pos, s.get_neighbor_parallel());
+    float dens_a = s.get_float_attr("density", p);
+    dens_a = std::fmax(dens_a, s.get_density0());
+    for(size_t a = 0; a < neighbors.size(); ++a)
     {
       size_t pid = neighbors[a]; 
-      float dens_b = s->get_float_attr("density",pid);
-      dens_b = std::fmax(dens_b, s->get_density0());
+      float dens_b = s.get_float_attr("density", pid);
+      dens_b = std::fmax(dens_b, s.get_density0());
 
-      float pa = strength * (std::pow(dens_a/rho_0,gamma) - 1.0);
-      float pb = strength * (std::pow(dens_b/rho_0,gamma) - 1.0);
-      pressure += s->grad_weight(pid, P) * s->mass(pid)
+      double pa = strength_ * (std::pow(dens_a/rho_0_, gamma_) - 1.0);
+      double pb = strength_ * (std::pow(dens_b/rho_0_, gamma_) - 1.0);
+      pressure += s.GradWeight(pid, pos) * s.mass(pid)
                 * ((pa/(dens_a*dens_a)) + (pb/(dens_b*dens_b))) ;    
     }
-
-    s->set_accel(p, s->accel(p) - pressure);
+    s.set_accel(p, s.accel(p) - pressure);
   }
 }
-void TaitPressureForce::compute(SoftBodyState& s, const double dt)
-{
-  std::cout << "not fluid\n";
-}
-void TaitPressureForce::compute(RigidBodyState& s, const double dt)
-{
-  std::cout << "not fluid\n";
-}
 
-void HarmonicOscillatorForce::compute(DynamicalState& s, const double dt)
+template<typename StateType>
+void HarmonicOscillatorForce<StateType>::Compute(StateType& s, const double dt)
 {
     #pragma omp parallel for
-    for(size_t p=0; p<s->nb(); p++)
+    for(size_t p = 0; p < s.nb(); ++p)
     {
-        s->set_accel(p, s->accel(p) - Kd * s->pos(p) / s->mass(p));
-    }
-}
-void HarmonicOscillatorForce::compute(SPHState& s, const double dt)
-{
-    #pragma omp parallel for
-    for(size_t p=0; p<s->nb(); p++)
-    {
-        s->set_accel(p, s->accel(p) - Kd * s->pos(p) / s->mass(p));
-    }
-}
-void HarmonicOscillatorForce::compute(SoftBodyState& s, const double dt)
-{
-    #pragma omp parallel for
-    for(size_t p=0; p<s->nb(); p++)
-    {
-        s->set_accel(p, s->accel(p) - Kd * s->pos(p) / s->mass(p));
-    }
-}
-void HarmonicOscillatorForce::compute(RigidBodyState& s, const double dt)
-{
-    #pragma omp parallel for
-    for(size_t p=0; p<s->nb(); p++)
-    {
-        s->set_accel(p, s->accel(p) - Kd * s->pos(p) / s->mass(p));
-    }
-}
-void AccumulatingForce::add_force(Force& f){ forces.push_back(f); }
-void AccumulatingForce::compute(DynamicalState& s, const double dt)
-{
-    #pragma omp parallel for
-    for(size_t p=0; p<s->nb(); p++)
-    {
-        s->set_accel(p, Vector(0,0,0)); // initialize accelerations to zero before we start accumulating
-    }
-    for(size_t p=0; p<forces.size(); p++)
-    {
-        forces[p]->compute(s,dt);
-    }
-}
-void AccumulatingForce::compute(SPHState& s, const double dt)
-{
-    #pragma omp parallel for
-    for(size_t p=0; p<s->nb(); p++)
-    {
-        s->set_accel(p, Vector(0,0,0)); // initialize accelerations to zero before we start accumulating
-    }
-    for(size_t p=0; p<forces.size(); p++)
-    {
-        forces[p]->compute(s,dt);
-    }
-}
-void AccumulatingForce::compute(SoftBodyState& s, const double dt)
-{
-    #pragma omp parallel for
-    for(size_t p=0; p<s->nb(); p++)
-    {
-        s->set_accel(p, Vector(0,0,0)); // initialize accelerations to zero before we start accumulating
-    }
-    for(size_t p=0; p<forces.size(); p++)
-    {
-        forces[p]->compute(s,dt);
-    }
-}
-void AccumulatingForce::compute(RigidBodyState& s, const double dt)
-{
-    #pragma omp parallel for
-    for(size_t p=0; p<s->nb(); p++)
-    {
-        s->set_accel(p, Vector(0,0,0)); // initialize accelerations to zero before we start accumulating
-    }
-    for(size_t p=0; p<forces.size(); p++)
-    {
-        forces[p]->compute(s,dt);
+        s.set_accel(p, s.accel(p) - kd_ * s.pos(p) / s.mass(p));
     }
 }
 
-void AccumulatingStrutForce::compute( DynamicalState& s, const double dt ){}
-void AccumulatingStrutForce::compute( SPHState& s, const double dt ){}
-void AccumulatingStrutForce::compute( RigidBodyState& s, const double dt ){}
-void AccumulatingStrutForce::compute( SoftBodyState& s, const double dt )
+template<typename StateType>
+void AccumulatingForce<StateType>::AddForce(ForceBase<StateType>* f) { forces.push_back(f); }
+
+template<typename StateType>
+void AccumulatingForce<StateType>::Compute(StateType& s, const double dt)
+{
+    #pragma omp parallel for
+    for (size_t p = 0; p < s.nb(); ++p)
+    {
+        s.set_accel(p, Vector(0,0,0)); // initialize accelerations to zero before we start accumulating
+    }
+    for (size_t p = 0; p < forces.size(); ++p)
+    {
+        forces[p]->Compute(s, dt);
+    }
+}
+
+void AccumulatingStrutForce::Compute(SoftBodyStateData& s, const double dt) 
 {
   #pragma omp parallel for
-  for( size_t i = 0; i < s->nb_pairs(); i++ )
+  for (size_t i = 0; i < s.nb_pairs(); ++i)
   {
-    const SoftEdge& se = s->get_connected_pair(i);
-    const size_t& inode = se->get_first_node();
-    const size_t& jnode = se->get_second_node();
-    Vector d_ij = s->pos(jnode) - s->pos(inode);
-    Vector v_ij = s->vel(jnode)-s->vel(inode);
-    float r_mass = (s->mass(inode) * s->mass(jnode)) / (s->mass(inode) + s->mass(jnode));
-    if(crit_damp)
+    const SoftEdge& se = s.get_connected_pair(i);
+    size_t inode = se.get_first_node();
+    size_t jnode = se.get_second_node();
+    Vector d_ij = s.pos(jnode) - s.pos(inode);
+    Vector v_ij = s.vel(jnode) - s.vel(inode);
+    float r_mass = (s.mass(inode) * s.mass(jnode)) / (s.mass(inode) + s.mass(jnode));
+    if(crit_damp_)
     {
-    float critical_damping = 2 * std::sqrt(r_mass * spring);
-    friction = critical_damping;
+      float critical_damping = 2 * std::sqrt(r_mass * spring_);
+      friction_ = critical_damping;
     }
-    Vector F;
+    Vector force;
     //both particles same spot
     //d_ij unnomrlaized is full error
-    if(se->get_edge_length() < 0.000001 )
+    if (se.get_edge_length() < 0.000001 )
     {
-        F = d_ij * spring;
-        F += v_ij * friction;
+      force = d_ij * spring_;
+      force += v_ij * friction_;
     }
     else
     {
-      double separation = d_ij.magnitude() - se->get_edge_length();
-      if(d_ij.magnitude() > 0) d_ij.normalize();
-      F = d_ij * (separation*spring);
-      F += d_ij * ( d_ij*v_ij ) * friction;
+      double separation = d_ij.magnitude() - se.get_edge_length();
+      if (d_ij.magnitude() > 0) d_ij.normalize();
+      force = d_ij * (separation*spring_);
+      force += d_ij * (d_ij*v_ij) * friction_;
     }
     #pragma omp critical
     {
-    s->set_accel(jnode, s->accel(jnode) - F/s->mass(jnode));
-    s->set_accel(inode, s->accel(inode) + F/s->mass(inode));
+      s.set_accel(jnode, s.accel(jnode) - force/s.mass(jnode));
+      s.set_accel(inode, s.accel(inode) + force/s.mass(inode));
     }
   }
 }
 
-Force pba::CreateGravityForce(const Vector& g)
-{
-  return std::make_shared<GravityForce>(g);
+//TODO: refactor to inits in ExplicitDynamics (dont need extra functionalityy per state type)
+// keeping as a reference
+
+// GravityForce instantiations
+template<>
+ForceDynamicsPtr CreateGravityForce(const Vector& g) {
+    return std::make_unique<GravityForce<DynamicalStateData>>(g);
 }
-Force pba::CreateTaitPressureForce(const float s, const float rest, const float g)
-{
-  return std::make_shared<TaitPressureForce>(s, rest, g);
+
+template<>
+ForceSPHPtr CreateGravityForce(const Vector& g) {
+    return std::make_unique<GravityForce<SPHStateData>>(g);
 }
-Force pba::CreateHarmonicOscillatorForce(const double& k)
-{
-  return std::make_shared<HarmonicOscillatorForce>(k);
+
+template<>
+ForceSBDPtr CreateGravityForce(const Vector& g) {
+    return std::make_unique<GravityForce<SoftBodyStateData>>(g);
 }
-Force pba::CreateAccumulatingForce()
-{
-  return std::make_shared<AccumulatingForce>();
+
+template<>
+ForceRBDPtr CreateGravityForce(const Vector& g) {
+    return std::make_unique<GravityForce<RigidBodyStateData>>(g);
 }
-Force pba::CreateAccumulatingStrutForce(const double g, const double f, const bool c)
-{
-  return std::make_shared<AccumulatingStrutForce>(g, f, c);
+
+// TaitPressureForce (non-template, already specialized for SPH)
+ForceSPHPtr CreateTaitPressureForce(float strength, float rest_dens, float gamma) {
+    return std::make_unique<TaitPressureForce>(strength, rest_dens, gamma);
 }
+
+// HarmonicOscillatorForce instantiations
+template<>
+ForceDynamicsPtr CreateHarmonicOscillatorForce(double k) {
+    return std::make_unique<HarmonicOscillatorForce<DynamicalStateData>>(k);
+}
+
+template<>
+ForceSPHPtr CreateHarmonicOscillatorForce(double k) {
+    return std::make_unique<HarmonicOscillatorForce<SPHStateData>>(k);
+}
+
+ForceSBDPtr CreateHarmonicOscillatorForce(double k) {
+    return std::make_unique<HarmonicOscillatorForce<SoftBodyStateData>>(k);
+}
+
+template<>
+ForceRBDPtr CreateHarmonicOscillatorForce(double k) {
+    return std::make_unique<HarmonicOscillatorForce<RigidBodyStateData>>(k);
+}
+
+// AccumulatingForce instantiations
+template<>
+ForceDynamicsPtr CreateAccumulatingForce() {
+    return std::make_unique<AccumulatingForce<DynamicalStateData>>();
+}
+
+template<>
+ForceSPHPtr CreateAccumulatingForce() {
+    return std::make_unique<AccumulatingForce<SPHStateData>>();
+}
+
+template<>
+ForceSBDPtr CreateAccumulatingForce() {
+    return std::make_unique<AccumulatingForce<SoftBodyStateData>>();
+}
+
+template<>
+ForceRBDPtr CreateAccumulatingForce() {
+    return std::make_unique<AccumulatingForce<RigidBodyStateData>>();
+}
+
+// AccumulatingStrutForce (specialized for SoftBody)
+ForceSBDPtr CreateAccumulatingStrutForce(double spring, double friction, bool crit_damp) {
+    return std::make_unique<AccumulatingStrutForce>(spring, friction, crit_damp);
+}
+
+// Explicit instantiations
+template class GravityForce<DynamicalStateData>;
+template class GravityForce<SPHStateData>;
+template class GravityForce<SoftBodyStateData>;
+template class GravityForce<RigidBodyStateData>;
+
+template class HarmonicOscillatorForce<DynamicalStateData>;
+template class HarmonicOscillatorForce<SPHStateData>;
+template class HarmonicOscillatorForce<SoftBodyStateData>;
+template class HarmonicOscillatorForce<RigidBodyStateData>;
+
+template class AccumulatingForce<DynamicalStateData>;
+template class AccumulatingForce<SPHStateData>;
+template class AccumulatingForce<SoftBodyStateData>;
+template class AccumulatingForce<RigidBodyStateData>;
+
+}//end of pba namespace

@@ -7,7 +7,7 @@ NeighborSearch::NeighborSearch(){}
 NeighborSearch::NeighborSearch(const AABB& b, float r): bounds(b), radius(r)
 {
     cell_size = 2 * radius;
-    L = bounds.getURC() - bounds.getLLC();
+    L = bounds.urc() - bounds.llc();
     nx = L.X()/cell_size + 1; 
     ny = L.Y()/cell_size + 1; 
     nz = L.Z()/cell_size + 1; 
@@ -35,13 +35,13 @@ void NeighborSearch::set_cellsize(const float c)
 void NeighborSearch::set_bounds(const AABB& b)
 {
     bounds = b;
-    L = bounds.getURC() - bounds.getLLC();
+    L = bounds.urc() - bounds.llc();
     compute_size();
 }
 
 NeighborSearch::~NeighborSearch(){}
 
-void NeighborSearch::populate(const DynamicalStateData& state)
+void NeighborSearch::Populate(const DynamicalStateData& state)
 {   
     clear_grid();
     #pragma omp parallel for
@@ -111,7 +111,7 @@ void NeighborSearch::neighbors_list(std::vector<size_t>& neighbors, const Vector
 
 void NeighborSearch::in_bounds(const Vector& pos, size_t p)
 {
-    if(bounds.isInside(pos))
+    if(bounds.IsInside(pos))
     {
         size_t ind = index(pos);
         if(ind < size)
@@ -150,7 +150,7 @@ size_t NeighborSearch::index( size_t i, size_t j, size_t k ) const
 
 size_t NeighborSearch::index( const Vector& pos ) const
 {
-    Vector rel_pos = pos - bounds.getLLC();
+    Vector rel_pos = pos - bounds.llc();
     for(size_t q=0;q<3;q++)
     {
        if(rel_pos[q] < 0.0 ){ return nx*ny*nz;}

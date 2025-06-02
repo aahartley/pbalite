@@ -15,7 +15,6 @@ OFILES = base/PbaViewer.o \
 		 base/ForceLibrary.o \
 		 base/Viscosity.o\
 		 base/ParticleEmitter.o \
-		 base/GISolver.o \
 		 base/ExplicitDynamics.o \
 		 base/CollisionHandler.o \
 		 base/CollisionSurface.o \
@@ -38,7 +37,7 @@ OFILES = base/PbaViewer.o \
 ROOTDIR = .
 LIB = $(ROOTDIR)/lib/libpba.a 
 GLLDFLAGS     = -lglut -lGL -lm -lGLU
-CXX = g++ -Wall -g -O2 -fPIC $(DEFINES) -fopenmp -std=c++11
+CXX = g++ -Wall -g -O2 -fPIC $(DEFINES) -fopenmp -std=c++14
 INCLUDES =  -I ./include/ -I /usr/local/include/ -I/usr/include/ -I ./things
 
 

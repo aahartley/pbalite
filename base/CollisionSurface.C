@@ -1,50 +1,62 @@
+//*******************************************************************
+//
+//   CollisionSurface.C
+//
+//   Collision Surface stores triangles, and returns data for first collisin
+//
+//
+//
+//*******************************************************************
 
 #include "CollisionHandler.h"
 
-using namespace pba;
-
-CollisionSurfaceRaw::CollisionSurfaceRaw() :
-   visible (true),
-   wireframe(true),
-   points(false),
-   coeff_of_restitution (1.0),
-   coeff_of_sticky (1.0)
-{}
-
-
-void CollisionSurfaceRaw::addPlane(const CollisionInfinitePlane& plane)
+namespace pba
 {
-    plane_elements.push_back(plane);
+
+CollisionSurface::CollisionSurface() 
+  : visible_ (true),
+    wireframe_(true),
+    points_(false),
+    coeff_of_restitution_(1.0),
+    coeff_of_sticky_(1.0) {}
+
+
+void CollisionSurface::AddPlane(const CollisionInfinitePlane& plane)
+{
+    plane_elements_.push_back(plane);
 }
 
-void CollisionSurfaceRaw::addTriangle(const CollisionTriangle& tri)
+void CollisionSurface::AddTriangle(const CollisionTriangle& tri)
 {
-    tri_elements.push_back(tri);
+    tri_elements_.push_back(tri);
 }
 
-bool CollisionSurfaceRaw::hit(const Vector& X0, const Vector& XU, const Vector& V, const double dt, CollisionData& data, float radius) const
+bool CollisionSurface::Hit(
+    const Vector& x_0, const Vector& x_u, const Vector& v_0, double dt, CollisionData& data, float rad)
 {
     //init data
     bool hit = false;
     data.hit_time = 2.0 * dt;
     data.hit_tri = false;
     //data.hit_plane = false;
-    for( size_t i = 0; i < tri_elements.size(); i++ )
+    for (size_t i = 0; i < tri_elements_.size(); ++i)
     {
-        double dtH_candidate = data.hit_time;
-        Vector XH_candidate;
+        double dt_candidate = data.hit_time;
+        Vector x_h_candidate;
         //check for coll for all planes 
-        if(tri_elements[i]->hit( X0,XU, V, dt, XH_candidate, dtH_candidate, radius))
+        if (tri_elements_[i].Hit(x_0, x_u, v_0, dt, x_h_candidate, dt_candidate, rad))
         {
             hit = true;
             // Find the earliest collision, i.e. the one that happened longest into the past.
-            if( std::fabs(dtH_candidate) < std::fabs(data.hit_time) )
+            if (std::fabs(dt_candidate) < std::fabs(data.hit_time))
             {
-                data.hit_time = dtH_candidate;
-                data.XH = XH_candidate;
+                data.hit_time = dt_candidate;
+                data.x_h = x_h_candidate;
                 data.hit_tri = true;
-                data.tri = tri_elements[i];
+                data.tri = &tri_elements_[i];
                 data.hit_index = i;
+                // std::cout << "hit_tri: " << data.hit_tri << '\n';
+                // std::cout << "hit_index: " << data.hit_index << '\n';
             }
         }
     }
@@ -83,7 +95,10 @@ bool CollisionSurfaceRaw::hit(const Vector& X0, const Vector& XU, const Vector& 
 //     return hit;
 // }
 
-CollisionSurface pba::makeCollisionSurface()
+// TODO: add custom inits?
+CollisionSurfacePtr CreateCollisionSurface()
 {
-   return std::make_shared<CollisionSurfaceRaw>();
+   return std::make_unique<CollisionSurface>();
 }
+
+}// end of pba namespace

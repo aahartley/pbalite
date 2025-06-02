@@ -1,21 +1,29 @@
+//*******************************************************************
+//
+//   CollisionHandler.C
+//
+//   Continous collison detection, resolve all hits during one time step
+//
+//
+//
+//*******************************************************************
+
 #include "CollisionHandler.h"
-#include "LinearAlgebra.h"
+
 #include <cmath>
 #include <iostream>
 
-
-using namespace pba;
-
-
-void CollisionHandler::set_collision_surface(CollisionSurface& c)
+namespace pba
 {
-    surf = c;
+
+void CollisionHandlerBase::set_collision_surface(CollisionSurface* c)
+{
+    surf_ = c;
 }
 
-
-void CollisionHandler::set_bvh(BVH& b)
+void CollisionHandlerBase::set_bvh(const BVH* b)
 {
-    bvh = b;
+    bvh_ = b;
 }
 
 ElasticCollisionHandler::ElasticCollisionHandler(){}
@@ -23,77 +31,87 @@ ElasticCollisionHandler::~ElasticCollisionHandler(){}
 // Check if positions imply a collision has already taken place within the allotted time.
 // If so, backs the position up along the velocity direction to the point of impact, then
 // does an elastic bounce, repat until end of time step
-void ElasticCollisionHandler::handle_collisions(const double dt, DynamicalState& PQ) 
+void ElasticCollisionHandler::HandleCollisions(double dt, DynamicalStateData& pq) 
 {
+    if (surf_ == nullptr) return;
     #pragma omp parallel for
-    for( size_t i=0;i<PQ->nb();i++ )
+    for (size_t i = 0; i < pq.nb(); ++i)
     {
-        Vector V0 = PQ->vel(i); 
-        //get start pos before integration (pos up, pos up (-dt), vel up, vel up (-dt))
-        Vector X0 = (PQ->pos(i) - V0*dt);
+        Vector v_0 = pq.vel(i); 
+        //get start pos before integration (pos 1st, pos 1st (-dt), vel 1st, vel 1st (-dt))
+        Vector x_0 = (pq.pos(i) - v_0*dt);
         //coll results
-        Vector XR = PQ->pos(i); //end pos (current pos)
-        Vector VR = V0;
-        float radius = PQ->rad(i);
+        Vector x_r = pq.pos(i); //end pos (current pos)
+        Vector v_r = v_0;
+        float radius = pq.rad(i);
         CollisionData data;
         double running_dt = dt;
         bool keep_checking_for_hits = true;
         //int count = 0;
-        while(keep_checking_for_hits)
+        while (keep_checking_for_hits)
         {
             keep_checking_for_hits = false;
             //check for coll
-            if(useBVH && bvh != 0)
+            if (use_bvh_ && bvh_)
             {
-            Vector direction = (XR - X0).unitvector();
-            Ray ray(X0, XR, direction);
-            if( bvh->hit(ray, X0, XR, V0, running_dt, data))
-            {
-                //std::cout << "hit worked\n";
-                keep_checking_for_hits = true;
-                if(data.hit_tri)
-                    data.tri->handle( X0, V0, running_dt, data.XH, data.hit_time, XR, VR, surf->coeff_sticky(), surf->coeff_restitution());
-          
-                X0 = data.XH;
-                V0 = VR;
-                running_dt = running_dt - data.hit_time;
-    
-                if ((dt >= 0 && running_dt <= 0) || (dt < 0 && running_dt >= 0))
+                Vector direction = (x_r - x_0).unitvector();
+                Ray ray(x_0, x_r, direction);
+                if (bvh_->Hit(ray, x_0, x_r, v_0, running_dt, data))
                 {
-                    keep_checking_for_hits = false;
-                }              
-            }
+                    //std::cout << "hit worked\n";
+                    keep_checking_for_hits = true;
+                    if (data.hit_tri)
+                        data.tri->Handle(v_0, running_dt, data.x_h, data.hit_time, x_r, 
+                                         v_r, surf_->coeff_sticky(), surf_->coeff_restitution());
+                    x_0 = data.x_h;
+                    v_0 = v_r;
+                    running_dt = running_dt - data.hit_time;
+        
+                    if ((dt >= 0 && running_dt <= 0) || (dt < 0 && running_dt >= 0))
+                    {
+                        keep_checking_for_hits = false;
+                    }              
+                }
             }
             else
             {
-            if( surf->hit( X0, XR, V0, running_dt, data , radius))
-            {
-                keep_checking_for_hits = true;
-                // Handle collision on plane, with the smallest dtH at hit point XH
-                //std::cout << data.hit_time << '\n';
-                // if(data.hit_plane)
-                //     surf->get_plane(data.hit_index).handle( X0, V0, running_dt, data.XH, data.hit_time, XR, VR, surf->coeff_sticky(), surf->coeff_restitution());
-                if(data.hit_tri)
-                    surf->get_triangle(data.hit_index)->handle( X0, V0, running_dt, data.XH, data.hit_time, XR, VR, surf->coeff_sticky(), surf->coeff_restitution());
-                // if(data.hit_time==0)
-                // {   
-                //     //std::cout << "hittime is 0\n";
-                //     keep_checking_for_hits=false;
-                // }
-                X0 = data.XH;
-                V0 = VR;
-                //std::cout << "vel: "<<V0.Y() << '\n';
-                running_dt = running_dt - data.hit_time;
-                //std::cout << "hit " << count << " : "<< running_dt << '\n';
-                //count++;
-                if ((dt >= 0 && running_dt <= 0) || (dt < 0 && running_dt >= 0))
+                if (surf_->Hit( x_0, x_r, v_0, running_dt, data , radius))
                 {
-                    keep_checking_for_hits = false;
-                }              
-            }
+                    //std::cout << "hit worked\n";
+                    keep_checking_for_hits = true;
+                    // Handle collision on plane, with the smallest dtH at hit point XH
+                    //std::cout << data.hit_time << '\n';
+                    // if(data.hit_plane)
+                    //     surf->get_plane(data.hit_index).handle( x_0, v_0, running_dt, data.XH, data.hit_time, x_r, v_r, surf->coeff_sticky(), surf->coeff_restitution());
+             
+                    if (data.hit_tri)
+                    {
+                        surf_->get_triangle(data.hit_index).Handle(v_0, running_dt, data.x_h, data.hit_time,
+                                                                    x_r, v_r, surf_->coeff_sticky(), surf_->coeff_restitution());
+                        // std::cout << "hit_tri:(handle) " << data.hit_tri << '\n';
+                        // std::cout << "hit_index:(handle) " << data.hit_index << '\n';
+                    }
+                    // if(data.hit_time==0)
+                    // {   
+                    //     //std::cout << "hittime is 0\n";
+                    //     keep_checking_for_hits=false;
+                    // }
+                    x_0 = data.x_h;
+                    v_0 = v_r;
+                    //std::cout << "vel: "<<v_0.Y() << '\n';
+                    running_dt = running_dt - data.hit_time;
+                    //std::cout << "hit " << count << " : "<< running_dt << '\n';
+                    //count++;
+                    if ((dt >= 0 && running_dt <= 0) || (dt < 0 && running_dt >= 0))
+                    {
+                        keep_checking_for_hits = false;
+                    }              
+                }
             }
         }
-        PQ->set_pos( i, XR );
-        PQ->set_vel( i, VR );
+        pq.set_pos(i, x_r);
+        pq.set_vel(i, v_r);
     }
 }
+
+}//end of pba namespace

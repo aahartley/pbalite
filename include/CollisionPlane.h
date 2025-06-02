@@ -3,8 +3,7 @@
   
 #include "Vector.h"
 
-#include <iostream>
-#include <algorithm>
+
   
 namespace pba
 {

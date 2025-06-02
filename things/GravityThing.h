@@ -69,13 +69,15 @@ class GravityThing: public PbaThingyDingy
 
     // flag for whether to create more particles
     bool emit;
-    DynamicalState state;
-    GISolver solver;
-    Force force;
-    Force gravityforce;
+    DynamicalStatePtr state;
+    GISolverPtr a;
+    GISolverPtr b;
+    GISolverPtr solver;
+    ForceDynamicsPtr force;
+    ForceDynamicsPtr gravityforce;
  
     ElasticCollisionHandler collisions;
-    CollisionSurface box;
+    CollisionSurfacePtr box;
     ParticleEmitter emitter;
 
 };

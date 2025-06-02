@@ -16,53 +16,34 @@ namespace pba
 class WCSPHSolver : public GISolverBase
 {
   public:
-    WCSPHSolver(SPHState& pq, Force& f, GISolver& sol);
+    WCSPHSolver(SPHStateData& pq, ForceBase<SPHStateData>& f, GISolverPtr solver)
+      : pq_(pq),
+        force_(f),
+        solver_(std::move(solver)),
+        user_dt_(0.001),
+        dt_(0.001) {}
+
     ~WCSPHSolver(){}
     
-    void init();
-    void solve(const double dt);
+    void Init();
+    void Solve(double dt);
 
     void get_timestep();
 
   private:
-    SPHState PQ;
-    Force force;
-    GISolver solver;
-    float user_dt;
-    float dt;
+    SPHStateData& pq_;
+    ForceBase<SPHStateData>& force_;
+    GISolverPtr solver_;
+    float user_dt_;
+    float dt_;
+
 
 
 };
 
-GISolver CreateWCSPHSolver( SPHState& pq, Force& f, GISolver& sol );
+GISolverPtr CreateWCSPHSolver(SPHStateData& pq, ForceBase<SPHStateData>& f, GISolverPtr solver);
 
 
-class WCSPHSolverWithCollisions : public GISolverBase
-{
-  public:
-    WCSPHSolverWithCollisions(SPHState& pq, Force& f, ElasticCollisionHandler& coll, GISolver& sol);
-    ~WCSPHSolverWithCollisions(){}
-    
-    void init();
-    void solve(const double dt);
-
-    void get_timestep();
-
-
-
-
-  private:
-    SPHState PQ;
-    Force force;
-    ElasticCollisionHandler& CS;
-    GISolver solver;
-    float user_dt;
-    float dt;
-
-
-};
-
-GISolver CreateWCSPHSolver( SPHState& pq, Force& f, ElasticCollisionHandler& cs, GISolver& sol );
 
 
 

@@ -1,6 +1,8 @@
 #include "ParticleEmitter.h"
+#include <iostream>
 
-using namespace pba;
+namespace pba
+{
 
 ParticleEmitter::ParticleEmitter() :
     location      (Vector(0,0,0)),
@@ -20,16 +22,16 @@ ParticleEmitter::ParticleEmitter( const Vector& loc, const Vector& vel) :
 }
 
 
-void ParticleEmitter::emitCube(DynamicalState& state, int numParticlesPerAxis, const Vector& center)
+void ParticleEmitter::emitCube(DynamicalStateData& state, int numParticlesPerAxis, const Vector& center)
 {
 
 
 
     int numPoints = numParticlesPerAxis * numParticlesPerAxis * numParticlesPerAxis;
     //int numPoints = rate * rate * rate;
-    state->add(numPoints);
-    int i = state->nb()-numPoints;
-    std::cout << "Emit: Total Points " << state->nb() << std::endl;
+    state.Add(numPoints);
+    int i = state.nb()-numPoints;
+    std::cout << "Emit: Total Points " << state.nb() << std::endl;
 
     //numParticlesPerAxis = rate; 
    
@@ -39,7 +41,7 @@ void ParticleEmitter::emitCube(DynamicalState& state, int numParticlesPerAxis, c
         { 
             for (int z = 0; z < numParticlesPerAxis; z++)
             {
-                float spacing = 2.0f * state->rad(i);
+                float spacing = 2.0f * state.rad(i);
 
                 //make cube - center cube
                 float px = x * spacing + center.X() - (numParticlesPerAxis - 1) * spacing * 0.5f;
@@ -48,11 +50,11 @@ void ParticleEmitter::emitCube(DynamicalState& state, int numParticlesPerAxis, c
                 // float px = x * spacing + location.X() - (numParticlesPerAxis - 1) * spacing * 0.5f;
                 // float py = y * spacing + location.Y() - (numParticlesPerAxis - 1) * spacing * 0.5f;
                 // float pz = z * spacing + location.Z() - (numParticlesPerAxis - 1) * spacing * 0.5f;
-                state->set_pos(i, Vector(px,py,pz));
-                state->set_vel(i, Vector(randf(),randf(),randf()));
-                state->set_mass(i,1);
-                state->set_ci(i, Color(0,0,1,1));
-                state->set_id(i,i);
+                state.set_pos(i, Vector(px,py,pz));
+                state.set_vel(i, Vector(randf(),randf(),randf()));
+                state.set_mass(i,1);
+                state.set_ci(i, Color(0,0,1,1));
+                state.set_id(i,i);
                 i++;
             }
       }
@@ -61,16 +63,16 @@ void ParticleEmitter::emitCube(DynamicalState& state, int numParticlesPerAxis, c
 
 }
 
-void ParticleEmitter::emitCube(SPHState& state, int numParticlesPerAxis, const Vector& center)
+void ParticleEmitter::emitCube(SPHStateData& state, int numParticlesPerAxis, const Vector& center)
 {
 
 
 
     int numPoints = numParticlesPerAxis * numParticlesPerAxis * numParticlesPerAxis;
     //int numPoints = rate * rate * rate;
-    state->add(numPoints);
-    int i = state->nb()-numPoints;
-    std::cout << "Emit: Total Points " << state->nb() << std::endl;
+    state.Add(numPoints);
+    int i = state.nb()-numPoints;
+    std::cout << "Emit: Total Points " << state.nb() << std::endl;
 
     //numParticlesPerAxis = rate; 
    
@@ -80,7 +82,7 @@ void ParticleEmitter::emitCube(SPHState& state, int numParticlesPerAxis, const V
         { 
             for (int z = 0; z < numParticlesPerAxis; z++)
             {
-                float spacing = 2.0f * state->get_particle_radius();
+                float spacing = 2.0f * state.get_particle_radius();
 
                 //make cube - center cube
                 float px = x * spacing + center.X() - (numParticlesPerAxis - 1) * spacing * 0.5f;
@@ -89,15 +91,17 @@ void ParticleEmitter::emitCube(SPHState& state, int numParticlesPerAxis, const V
                 // float px = x * spacing + location.X() - (numParticlesPerAxis - 1) * spacing * 0.5f;
                 // float py = y * spacing + location.Y() - (numParticlesPerAxis - 1) * spacing * 0.5f;
                 // float pz = z * spacing + location.Z() - (numParticlesPerAxis - 1) * spacing * 0.5f;
-                state->set_pos(i, Vector(px,py,pz));
-                state->set_vel(i, Vector(0,0,0));
-                state->set_mass(i, state->get_float_attr("volume", i) * state->get_density0());
-                state->set_ci(i, Color(0,0,1,1));
-                state->set_id(i,i);
+                state.set_pos(i, Vector(px,py,pz));
+                state.set_vel(i, Vector(0,0,0));
+                state.set_mass(i, state.get_float_attr("volume", i) * state.get_density0());
+                state.set_ci(i, Color(0,0,1,1));
+                state.set_id(i,i);
                 i++;
             }
       }
    }
 
+
+}
 
 }

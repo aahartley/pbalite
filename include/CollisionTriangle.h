@@ -1,65 +1,80 @@
+//*******************************************************************
+//
+//   CollisionTriangle.h
+//
+//   Collision Triangle determines if inside triangle area
+//   handles reflection
+//
+//
+//
+//*******************************************************************
+
 #ifndef __PBA_COLLISION_TRI_H__
 #define __PBA_COLLISION_TRI_H__
   
 #include "Vector.h"
 #include "AABB.h"
-#include <iostream>
-#include <algorithm>
-#include <memory>
   
 namespace pba
 {
-  
-class CollisionTriangleRaw
+/*!
+  Collision Triangle does barycentric coords check
+  handles refelction
+ */   
+class CollisionTriangle
 {
   public:
-    CollisionTriangleRaw() :  v0(Vector(0,0,0)), v1(Vector(0,0,0)), v2(Vector(0,0,0))
+    CollisionTriangle() 
+      : v0_(Vector(0,0,0)), 
+        v1_(Vector(0,0,0)), 
+        v2_(Vector(0,0,0))
     {
-        normal = Vector(0,0,0),
-        un_normal = normal;
-        e1 = v1 - v0;
-        e2 = v2 - v0;
-        e3 = v2 - v1; //e3 = e2-e1;
-        aabb = AABB(v0, v1);
+        normal_ = Vector(0,0,0),
+        un_normal_ = normal_;
+        e1_ = v1_ - v0_;
+        e2_ = v2_ - v0_;
+        e3_ = v2_ - v1_; //e3 = e2-e1;
+        aabb_ = AABB(v0_, v1_);
     }
-    CollisionTriangleRaw(const Vector& v0, const Vector& v1, const Vector& v2);
-    ~CollisionTriangleRaw(){}
+    CollisionTriangle(const Vector& v0, const Vector& v1, const Vector& v2);
+    ~CollisionTriangle(){}
     
-    bool hit(const Vector& X0, const Vector& Xu, const Vector& V, const double dt, Vector& XH_cand, double& dtH_cand, float radius) const;
-    // bool hit( const Vector& XS, const Vector VS, const double& dt, Vector& XH, double& dtH ) const;
+    void ComputeNormal();
+
+    //! If in triangle, returns true, then xh_cand and dt_cand are filled with the hit point and hit time.
+    bool Hit(
+      const Vector& x_0, const Vector& x_u, const Vector& v, double dt, Vector& xh_cand, double& dt_cand, float rad) const;
     
-    //It returns true, then XH and dtH are filled with the hit point and hit time.
-    // Takes in hit data and returns reflected position and velocity
-    void handle(const Vector& XS, const Vector& VS, const double& dt, const Vector& XH, const double& dtH, Vector& XR, Vector& VR, float cs, float cr) const;  
+    //! Takes in hit data and returns reflected position and velocity
+    void Handle(
+      const Vector& v_s, double dt, const Vector& x_h, double dt_h, Vector& x_r, Vector& v_r, float cs, float cr) const;  
 
-    const Vector& getV0(){ return v0; } 
-    const Vector& getV1(){ return v1; } 
-    const Vector& getV2(){ return v2; }
+    const Vector& v0() const { return v0_; } 
+    const Vector& v1() const { return v1_; } 
+    const Vector& v2() const { return v2_; }
 
-    const Vector& getE1(){ return e1; } 
-    const Vector& getE2(){ return e2; } 
-    const Vector& getE3(){ return e3; } 
+    const Vector& e1() const { return e1_; } 
+    const Vector& e2() const { return e2_; } 
+    const Vector& e3() const { return e3_; } 
 
-    const Vector& getNormal(){ return normal; } 
-    const AABB& getAABB(){ return aabb; }
-    void compute_normal();
+    const Vector& normal() const { return normal_; } 
+    const AABB& aabb() { return aabb_; }
 
   private:
-    Vector normal;
-    Vector un_normal;
-    Vector v0;
-    Vector v1;
-    Vector v2;
+    Vector normal_;
+    Vector un_normal_;
+    Vector v0_;
+    Vector v1_;
+    Vector v2_;
 
-    Vector e1;
-    Vector e2;
-    Vector e3;
-    AABB aabb;
+    Vector e1_;
+    Vector e2_;
+    Vector e3_;
+    AABB aabb_;
 
   
 };
-typedef std::shared_ptr<CollisionTriangleRaw> CollisionTriangle;
-CollisionTriangle makeCollisionTriangle(  const Vector& p0, const Vector& p1, const Vector& p2 );
+
 
 }
   

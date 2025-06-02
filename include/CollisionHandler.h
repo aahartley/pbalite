@@ -1,3 +1,13 @@
+//*******************************************************************
+//
+//   CollisionHandler.h
+//
+//   Continous collison detection, resolve all hits during one time step
+//
+//
+//
+//*******************************************************************
+
 #ifndef __PBA_COLLISIONHANDLER_H__
 #define __PBA_COLLISIONHANDLER_H__
   
@@ -9,41 +19,46 @@
 
 namespace pba
 {
-  
-class CollisionHandler
+/*!
+  Collision Handler loops until every collision is handled in a time step
+ */
+class CollisionHandlerBase
 {
   public:
-  
-    CollisionHandler() : surf(0), bvh(0), useBVH(true){}
-    virtual ~CollisionHandler(){}
+    CollisionHandlerBase() 
+      : surf_(nullptr),
+        bvh_(nullptr), 
+        use_bvh_(true) {}
+    virtual ~CollisionHandlerBase(){}
 
-    virtual void handle_collisions(const double dt, DynamicalState& s){ std::cout << "CollisionHandler::handle_collisions(double,DynamicalState) called\n"; }
-    void set_collision_surface(CollisionSurface& c);
-    void set_bvh(BVH& b);
+    virtual void HandleCollisions(double dt, DynamicalStateData& pq) 
+    { 
+      std::cout << "CollisionHandler::handle_collisions(double,DynamicalState) called\n"; 
+    }
 
-    void use_bvh() { useBVH = true; }
-    void dont_use_bvh() { useBVH = false; }
+    void set_collision_surface(CollisionSurface* c);
+    void set_bvh(const BVH* b);
+    void set_use_bvh(bool b) { use_bvh_ = b; }
   
   protected:
-    CollisionSurface surf;
-    BVH bvh;
-    bool useBVH;
-  
+    CollisionSurface* surf_;
+    const BVH* bvh_;
+    bool use_bvh_;
  };
 
-
-class ElasticCollisionHandler : public CollisionHandler
+/*!
+  Collision Handler loops until every collision is handled in a time step
+  Uses sticky and restituion 
+ */
+class ElasticCollisionHandler : public CollisionHandlerBase
 {
   public:
-
     ElasticCollisionHandler();
     ~ElasticCollisionHandler();
 
-    void handle_collisions(const double dt, DynamicalState& PQ);
-
+    void HandleCollisions(double dt, DynamicalStateData& pq);
 };
 
-
-}
+}//end of pba namespace
 
 #endif

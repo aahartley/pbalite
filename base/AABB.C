@@ -1,57 +1,70 @@
+//*******************************************************************
+//
+//   AABB.C
+//
+//  Axis Aligned Bounding Box for intersection testing
+//
+//
+//
+//*******************************************************************
+
 #include "AABB.h"
 
-using namespace pba;
+namespace pba
+{
 
 AABB::AABB(){}
 
-AABB::AABB(const Vector& LLC, const Vector& URC): urc(URC), llc(LLC){}
+AABB::AABB(const Vector& llc, const Vector& urc)
+  : llc_(llc),
+    urc_(urc) {}
 
 AABB::~AABB(){}
 
-const bool AABB::isInside( const Vector& P ) const
+bool AABB::IsInside(const Vector& P) const
 {
-    for( int i =0; i < 3; i++ )
+    for(int i = 0; i < 3; ++i)
     {
-       if( P[i] < llc[i] ){ return false; }
-       if( P[i] > urc[i] ){ return false; }
+       if (P[i] < llc_[i]) { return false; }
+       if (P[i] > urc_[i]) { return false; }
     }
     return true;
 }
 
-void AABB::split( const int component, AABB& aabb0, AABB& aabb1 ) const
+void AABB::Split(int component, AABB& aabb0, AABB& aabb1) const
 {
-    Vector center = (llc + urc) * 0.5;
+    Vector center = (llc_ + urc_) * 0.5;
     //lower
-    Vector urc0 = urc;
+    Vector urc0 = urc_;
     urc0[component] = center[component];
-    aabb0.llc = llc;
-    aabb0.urc = urc0;
+    aabb0.llc_ = llc_;
+    aabb0.urc_ = urc0;
     //upper
-    Vector llc1 = llc;
+    Vector llc1 = llc_;
     llc1[component] = center[component];
-    aabb1.llc = llc1;
-    aabb1.urc = urc;
+    aabb1.llc_ = llc1;
+    aabb1.urc_ = urc_;
 }
 
-const bool AABB::intersects( const AABB& aabb ) const
+bool AABB::Intersects(const AABB& aabb) const
 {
-    if( llc[0] > aabb.urc[0] ){ return false; }
-    if( llc[1] > aabb.urc[1] ){ return false; }
-    if( llc[2] > aabb.urc[2] ){ return false; }
-    if( aabb.llc[0] > urc[0] ){ return false; }
-    if( aabb.llc[1] > urc[1] ){ return false; }
-    if( aabb.llc[2] > urc[2] ){ return false; }
+    if (llc_[0] > aabb.urc_[0]) { return false; }
+    if (llc_[1] > aabb.urc_[1]) { return false; }
+    if (llc_[2] > aabb.urc_[2]) { return false; }
+    if (aabb.llc_[0] > urc_[0]) { return false; }
+    if (aabb.llc_[1] > urc_[1]) { return false; }
+    if (aabb.llc_[2] > urc_[2]) { return false; }
     return true;
 }
 
 const Vector& AABB::getBounds(int sign) const
 {
-    if(sign) return urc;
-    else return llc;
+    if (sign) return urc_;
+    else return llc_;
 }
 
 //https://people.csail.mit.edu/amy/papers/box-jgt.pdf
-bool AABB::ray_intersect(const Ray& r, float t0, float t1) const 
+bool AABB::RayIntersects(const Ray& r, float t0, float t1) const 
 {
     float tmin = (getBounds(r.sign[0]).X() - r.origin.X()) * r.inv_direction.X();
     float tmax = (getBounds(1 - r.sign[0]).X() - r.origin.X()) * r.inv_direction.X();
@@ -81,3 +94,4 @@ bool AABB::ray_intersect(const Ray& r, float t0, float t1) const
     return (tmin < t1) && (tmax > t0);
 }
 
+} //end of pba namespace

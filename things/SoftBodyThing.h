@@ -1,25 +1,16 @@
-
-
 #include "Vector.h"
 #include "Color.h"
 #include "PbaThing.h"
 #include "PbaUtils.h"
-#include "DynamicalState.h"
+#include "SoftBodyState.h"
 #include "GISolver.h"
 #include "ExplicitDynamics.h"
 #include "ForceLibrary.h"
 #include "CollisionHandler.h"
 #include "ParticleEmitter.h"
 
-
-
-using namespace std;
-
-namespace pba{
-
-
-
-
+namespace pba
+{
 
 class SoftBodyThing: public PbaThingyDingy
 {
@@ -64,20 +55,21 @@ class SoftBodyThing: public PbaThingyDingy
     //! callback, you should include a statement 
     //! here as to what the keyboard option is.
     void Usage();
-    void AddCollisionSurface(pba::CollisionSurface& s);
+    void AddCollisionSurface(CollisionSurface& s);
   private:
-
     // flag for whether to create more particles
     bool emit;
-    SoftBodyState state;
-    GISolver solver;
-    Force force;
-    Force gravityforce;
-    Force struts;
+    SoftBodyStatePtr state;
+    GISolverPtr a;
+    GISolverPtr b;
+    GISolverPtr solver;
+    ForceSBDPtr force;
+    ForceSBDPtr gravityforce;
+    ForceSBDPtr struts;
  
     ElasticCollisionHandler collisions;
-    CollisionSurface box;
-    BVH bvh;
+    CollisionSurfacePtr box;
+    BVHPtr bvh;
     ParticleEmitter emitter;
 
     std::vector< std::vector<Vector> > verts;
@@ -85,18 +77,7 @@ class SoftBodyThing: public PbaThingyDingy
 
 };
 
-
-// This function constructs the MyThing and wraps it in a 
-// smart pointer called a PbaThing. 
-// You need not alter this.
 pba::PbaThing CreateSoftBodyThing();
-
-
-
-
-
-
-
 
 }
 

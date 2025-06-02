@@ -17,7 +17,7 @@ class NeighborSearch
     NeighborSearch(const AABB& b, float r);
     ~NeighborSearch();
 
-    void populate(const DynamicalStateData& state);
+    void Populate(const DynamicalStateData& state);
     void clear_grid();
 
     size_t index( const Vector& P ) const;

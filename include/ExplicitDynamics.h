@@ -1,5 +1,16 @@
+//*******************************************************************
+//
+//   ExplicitDynamics.h
+//
+//   Partial Solvers for pos and vel.
+//
+//
+//
+//*******************************************************************
+
 #ifndef __PBA_INTEGRATORS_H__
 #define __PBA_INTEGRATORS_H__
+
 #include "DynamicalState.h"
 #include "SPHState.h"
 #include "SoftBodyState.h"
@@ -7,207 +18,61 @@
 #include "ForceLibrary.h"
 #include "CollisionHandler.h"
 #include "GISolver.h"
+#include "Force.h"
 
 namespace pba
 {
+
 class AdvancePosition : public GISolverBase
 {
   public:
-    AdvancePosition(DynamicalState& pq);
-    ~AdvancePosition();
-    void init();
-    void solve(const double dt);
+    AdvancePosition(DynamicalStateData& pq, CollisionHandlerBase* coll = nullptr)
+      : pq_(pq), 
+        coll_handler_(coll), 
+        use_coll_(coll_handler_ != nullptr) {}
+    ~AdvancePosition() {}
+    void Init();
+    void Solve(double dt);
   private:
-    DynamicalState PQ; 
+    DynamicalStateData& pq_;
+    CollisionHandlerBase* coll_handler_;
+    bool use_coll_;
 };
 
-class AdvancePositionSPH : public GISolverBase
-{
-  public:
-    AdvancePositionSPH(SPHState& pq);
-    ~AdvancePositionSPH();
-    void init();
-    void solve(const double dt);
-  private:
-    SPHState PQ; 
-};
-class AdvancePositionSoftBody : public GISolverBase
-{
-  public:
-    AdvancePositionSoftBody(SoftBodyState& pq);
-    ~AdvancePositionSoftBody();
-    void init();
-    void solve(const double dt);
-  private:
-    SoftBodyState PQ; 
-};
-class AdvancePositionRigidBody : public GISolverBase
-{
-  public:
-    AdvancePositionRigidBody(RigidBodyState& pq);
-    ~AdvancePositionRigidBody();
-    void init();
-    void solve(const double dt);
-  private:
-    RigidBodyState PQ; 
-};
-
-class AdvancePositionWithCollisions : public GISolverBase 
-{
-  public:
- 
-    AdvancePositionWithCollisions(DynamicalState& pq, CollisionHandler& coll);
-    ~AdvancePositionWithCollisions();
- 
-    void init();
-    void solve(const double dt);
-    
-  private:
-    DynamicalState PQ;
-    CollisionHandler& CH;
- 
-};
-class AdvancePositionWithCollisionsSPH : public GISolverBase 
-{
-  public:
- 
-    AdvancePositionWithCollisionsSPH(SPHState& pq, CollisionHandler& coll);
-    ~AdvancePositionWithCollisionsSPH();
-    
-    void init();
-    void solve(const double dt);
-    
-  private:
-    SPHState PQ;
-    CollisionHandler& CH;
- 
-};
-class AdvancePositionWithCollisionsSoftBody : public GISolverBase 
-{
-  public:
- 
-    AdvancePositionWithCollisionsSoftBody(SoftBodyState& pq, CollisionHandler& coll);
-    ~AdvancePositionWithCollisionsSoftBody();
-    
-    void init();
-    void solve(const double dt);
-    
-  private:
-    SoftBodyState PQ;
-    CollisionHandler& CH;
- 
-};
-class AdvancePositionWithCollisionsRigidBody : public GISolverBase 
-{
-  public:
- 
-    AdvancePositionWithCollisionsRigidBody(RigidBodyState& pq, CollisionHandler& coll);
-    ~AdvancePositionWithCollisionsRigidBody();
-    
-    void init();
-    void solve(const double dt);
-    
-  private:
-    RigidBodyState PQ;
-    CollisionHandler& CH;
- 
-};
-
-
-
+template<typename StateType>
 class AdvanceVelocity : public GISolverBase
 {
   public:
-    AdvanceVelocity(DynamicalState& pq, Force& f, float a, float v);
-    ~AdvanceVelocity();
-    void init();
-    void solve(const double dt);
-    const float get_velocity_clamp() const { return velocity_clamp; }
-    void set_velocity_clamp(const float& v ) { velocity_clamp = v; }
+    AdvanceVelocity(StateType& pq, ForceBase<StateType>& f, float acceleration_clamp, float velocity_clamp);
+    ~AdvanceVelocity() {}
+    void Init() {}
+    void Solve(double dt);
 
-    const float get_acceleration_clamp() const { return acceleration_clamp; }
-    void set_acceleration_clamp(const float& v ) { acceleration_clamp = v; }
+    float get_velocity_clamp() const { return velocity_clamp_; }
+    void set_velocity_clamp(float v) { velocity_clamp_ = v; }
+
+    float get_acceleration_clamp() const { return acceleration_clamp_; }
+    void set_acceleration_clamp(float a) { acceleration_clamp_ = a; }
   private:
-    DynamicalState PQ; 
-    Force force; 
-    float acceleration_clamp;
-    float velocity_clamp;
+    StateType& pq_; 
+    ForceBase<StateType>& force_; 
+    float acceleration_clamp_;
+    float velocity_clamp_;
 
 };
-class AdvanceVelocitySPH : public GISolverBase
+
+
+template<typename StateType>
+GISolverPtr CreateAdvanceVelocity(StateType& pq, ForceBase<StateType>& f, float a, float v);
+
+inline GISolverPtr CreateAdvancePosition(DynamicalStateData& pq, CollisionHandlerBase* c_h = nullptr)
 {
-  public:
-    AdvanceVelocitySPH(SPHState& pq, Force& f, float a, float v);
-    ~AdvanceVelocitySPH();
-    void init();
-    void solve(const double dt);
-    const float get_velocity_clamp() const { return velocity_clamp; }
-    void set_velocity_clamp(const float& v ) { velocity_clamp = v; }
-
-    const float get_acceleration_clamp() const { return acceleration_clamp; }
-    void set_acceleration_clamp(const float& v ) { acceleration_clamp = v; }
-  private:
-    SPHState PQ; 
-    Force force; 
-    float acceleration_clamp;
-    float velocity_clamp;
-};
-class AdvanceVelocitySoftBody : public GISolverBase
-{
-  public:
-    AdvanceVelocitySoftBody(SoftBodyState& pq, Force& f, float a, float v);
-    ~AdvanceVelocitySoftBody();
-    void init();
-    void solve(const double dt);
-    const float get_velocity_clamp() const { return velocity_clamp; }
-    void set_velocity_clamp(const float& v ) { velocity_clamp = v; }
-
-    const float get_acceleration_clamp() const { return acceleration_clamp; }
-    void set_acceleration_clamp(const float& v ) { acceleration_clamp = v; }
-  private:
-    SoftBodyState PQ; 
-    Force force; 
-    float acceleration_clamp;
-    float velocity_clamp;
-};
-class AdvanceVelocityRigidBody : public GISolverBase
-{
-  public:
-    AdvanceVelocityRigidBody(RigidBodyState& pq, Force& f, float a, float v);
-
-    ~AdvanceVelocityRigidBody();
-    void init();
-    void solve(const double dt);
-    const float get_velocity_clamp() const { return velocity_clamp; }
-    void set_velocity_clamp(const float& v ) { velocity_clamp = v; }
-
-    const float get_acceleration_clamp() const { return acceleration_clamp; }
-    void set_acceleration_clamp(const float& v ) { acceleration_clamp = v; }
-  private:
-    RigidBodyState PQ; 
-    Force force; 
-    float acceleration_clamp;
-    float velocity_clamp;
-};
-
-
-
-GISolver CreateAdvanceVelocity(DynamicalState& pq, Force& f, float a, float v);
-GISolver CreateAdvanceVelocitySPH(SPHState& pq, Force& f, float a, float v);
-GISolver CreateAdvanceVelocitySoftBody(SoftBodyState& pq, Force& f, float a, float v);
-GISolver CreateAdvanceVelocityRigidBody(RigidBodyState& pq, Force& f, float a, float v);
-
-GISolver CreateAdvancePositionColl(DynamicalState& pq, pba::CollisionHandler& coll );
-GISolver CreateAdvancePositionCollSPH(SPHState& pq, pba::CollisionHandler& coll );
-GISolver CreateAdvancePositionCollSoftBody(SoftBodyState& pq, pba::CollisionHandler& coll );
-GISolver CreateAdvancePositionCollRigidBody(RigidBodyState& pq, pba::CollisionHandler& coll );
-
-GISolver CreateAdvancePosition(DynamicalState& pq);
-GISolver CreateAdvancePositionSPH(SPHState& pq);
-GISolver CreateAdvancePositionSoftBody(SoftBodyState& pq);
-GISolver CreateAdvancePositionRigidBody(RigidBodyState& pq);
+  return std::make_unique<AdvancePosition>(pq, c_h);
 
 }
 
+
+
+}
 
 #endif

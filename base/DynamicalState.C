@@ -1,325 +1,337 @@
+//*******************************************************************
+//
+//   DynamicalState.C
+//
+//  Functioning base class to store attribute data
+//
+//
+//
+//*******************************************************************
+
 #include "DynamicalState.h"
+#include <iostream>
 
-using namespace pba;
+namespace pba
+{
 
-DynamicalStateData::DynamicalStateData(const std::string& nam) :
- name(nam),
- time(0.0),
- nb_items(0),
- stage(NONE)
+DynamicalStateData::DynamicalStateData(const std::string& name)
+  : name_(name),
+    time_(0.0),
+    nb_items_(0),
+    stage_(NONE)
 {
     // create standard set of attributes:
     //   id, pos, vel, accel, ci, mass
-    vector_attributes["pos"] = DSAttribute<Vector>( "pos", Vector(0,0,0) );
-    vector_attributes["vel"] = DSAttribute<Vector>( "vel", Vector(0,0,0) );
-    vector_attributes["accel"] = DSAttribute<Vector>( "accel", Vector(0,0,0) );
-    float_attributes["mass"] = DSAttribute<float>( "mass", 1.0 );
-    float_attributes["rad"] = DSAttribute<float>( "rad", 0.0 );
-    int_attributes["id"] = DSAttribute<int>( "id", -1 );
-    color_attributes["ci"] = DSAttribute<Color>( "ci", Color(1,1,1,0) );
+    vector_attributes_["pos"] = DSAttribute<Vector>("pos", Vector(0,0,0));
+    vector_attributes_["vel"] = DSAttribute<Vector>("vel", Vector(0,0,0));
+    vector_attributes_["accel"] = DSAttribute<Vector>("accel", Vector(0,0,0));
+    float_attributes_["mass"] = DSAttribute<float>("mass", 1.0);
+    float_attributes_["rad"] = DSAttribute<float>("rad", 0.0);
+    int_attributes_["id"] = DSAttribute<int>("id", -1);
+    color_attributes_["ci"] = DSAttribute<Color>("ci", Color(1,1,1,0));
     re_find_main_attrs();
  
 }
 
-void DynamicalStateData::create_attr(const std::string& nam, const int& def)
+void DynamicalStateData::create_attr(const std::string& name, int def)
 {
     //map returnns end() if key not found
-    if(int_attributes.find(nam) != int_attributes.end()) { return; }
-    int_attributes[nam] = DSAttribute<int>(nam, def);
-    int_attributes[nam].expand_to(int_attributes["id"].size()); //make new attr same size as rest of data
+    if (int_attributes_.find(name) != int_attributes_.end()) { return; }
+    int_attributes_[name] = DSAttribute<int>(name, def);
+    int_attributes_[name].expand_to(int_attributes_["id"].size()); //make new attr same size as rest of data
     re_find_main_attrs();
 
 }
 
-void DynamicalStateData::create_attr( const std::string& nam, const float& def )
+void DynamicalStateData::create_attr(const std::string& name, float def)
 {
-   if(float_attributes.find(nam) != float_attributes.end()){ return; }
-   float_attributes[nam] = DSAttribute<float>(nam, def);
-   float_attributes[nam].expand_to( int_attributes["id"].size());
+   if (float_attributes_.find(name) != float_attributes_.end()) { return; }
+   float_attributes_[name] = DSAttribute<float>(name, def);
+   float_attributes_[name].expand_to( int_attributes_["id"].size());
    re_find_main_attrs();
 
 }
 
-void DynamicalStateData::create_attr( const std::string& nam, const Vector& def )
+void DynamicalStateData::create_attr(const std::string& name, const Vector& def)
 {
-   if(vector_attributes.find(nam) != vector_attributes.end()){ return; }
-   vector_attributes[nam] = DSAttribute<Vector>(nam, def);
-   vector_attributes[nam].expand_to(int_attributes["id"].size());
+   if (vector_attributes_.find(name) != vector_attributes_.end()){ return; }
+   vector_attributes_[name] = DSAttribute<Vector>(name, def);
+   vector_attributes_[name].expand_to(int_attributes_["id"].size());
    re_find_main_attrs();
 
 }
 
-void DynamicalStateData::create_attr( const std::string& nam, const Color& def )
+void DynamicalStateData::create_attr(const std::string& name, const Color& def)
 {
-   if(color_attributes.find(nam) != color_attributes.end()){ return; }
-   color_attributes[nam] = DSAttribute<Color>(nam, def);
-   color_attributes[nam].expand_to(int_attributes["id"].size());
+   if (color_attributes_.find(name) != color_attributes_.end()){ return; }
+   color_attributes_[name] = DSAttribute<Color>(name, def);
+   color_attributes_[name].expand_to(int_attributes_["id"].size());
    re_find_main_attrs();
 
 }
 
-const size_t DynamicalStateData::add()
+size_t DynamicalStateData::Add()
 {
-   size_t add_size = nb_items + 1;
-   for(std::map<std::string,DSAttribute<int>>::iterator a = int_attributes.begin(); a != int_attributes.end(); a++)
+   size_t add_size = nb_items_ + 1;
+   for (std::map<std::string,DSAttribute<int>>::iterator a = int_attributes_.begin(); a != int_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
-   for(std::map<std::string,DSAttribute<float>>::iterator a = float_attributes.begin(); a != float_attributes.end(); a++)
+   for (std::map<std::string,DSAttribute<float>>::iterator a = float_attributes_.begin(); a != float_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
-   for(std::map<std::string,DSAttribute<Vector>>::iterator a = vector_attributes.begin(); a != vector_attributes.end(); a++)
+   for (std::map<std::string,DSAttribute<Vector>>::iterator a = vector_attributes_.begin(); a != vector_attributes_.end(); ++a )
    {
       a->second.expand_to(add_size);
    }
-   for(std::map<std::string,DSAttribute<Color>>::iterator a = color_attributes.begin(); a != color_attributes.end(); a++)
+   for (std::map<std::string,DSAttribute<Color>>::iterator a = color_attributes_.begin(); a != color_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
-   nb_items = nb_items + 1;
+   nb_items_ = nb_items_ + 1;
    re_find_main_attrs();
 
    return add_size-1; // return the index of the new particle
 }
 
-const size_t DynamicalStateData::add( const size_t nb )
+size_t DynamicalStateData::Add(size_t nb)
 {
-   size_t add_size = nb_items + nb;
-   for(std::map<std::string,DSAttribute<int>>::iterator a = int_attributes.begin(); a != int_attributes.end(); a++)
+   size_t add_size = nb_items_ + nb;
+   for (std::map<std::string,DSAttribute<int>>::iterator a = int_attributes_.begin(); a != int_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
-   for(std::map<std::string,DSAttribute<float>>::iterator a = float_attributes.begin(); a != float_attributes.end(); a++)
+   for (std::map<std::string,DSAttribute<float>>::iterator a = float_attributes_.begin(); a != float_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
-   for(std::map<std::string,DSAttribute<Vector>>::iterator a = vector_attributes.begin(); a != vector_attributes.end(); a++)
+   for (std::map<std::string,DSAttribute<Vector>>::iterator a = vector_attributes_.begin(); a != vector_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
-   for(std::map<std::string,DSAttribute<Color>>::iterator a = color_attributes.begin(); a != color_attributes.end(); a++)
+   for (std::map<std::string,DSAttribute<Color>>::iterator a = color_attributes_.begin(); a != color_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
-   nb_items = nb_items + nb;
+   nb_items_ = nb_items_ + nb;
    re_find_main_attrs();
 
    return add_size-1; // return the index of the last particle
 }
 
-void DynamicalStateData::clear()
+void DynamicalStateData::Clear()
 {
-   for(std::map<std::string, DSAttribute<int>>::iterator a = int_attributes.begin(); a != int_attributes.end(); a++)
+   for (std::map<std::string, DSAttribute<int>>::iterator a = int_attributes_.begin(); a != int_attributes_.end(); ++a)
    {
       a->second.clear();
    }
-   for(std::map<std::string, DSAttribute<float>>::iterator a = float_attributes.begin(); a != float_attributes.end(); a++)
+   for (std::map<std::string, DSAttribute<float>>::iterator a = float_attributes_.begin(); a != float_attributes_.end(); ++a)
    {
       a->second.clear();
    }
-   for(std::map<std::string, DSAttribute<Vector>>::iterator a = vector_attributes.begin(); a != vector_attributes.end(); a++)
+   for (std::map<std::string, DSAttribute<Vector>>::iterator a = vector_attributes_.begin(); a != vector_attributes_.end(); ++a)
    {
       a->second.clear();
    }
-   for(std::map<std::string, DSAttribute<Color>>::iterator a = color_attributes.begin(); a != color_attributes.end(); a++)
+   for (std::map<std::string, DSAttribute<Color>>::iterator a = color_attributes_.begin(); a != color_attributes_.end(); ++a)
    {
       a->second.clear();
    }
 
-   time = 0.0;
-   nb_items = 0.0;
+   time_ = 0.0;
+   nb_items_ = 0.0;
 }
 
-const int& DynamicalStateData::get_int_attr(const std::string& nam, const size_t p) const
+int DynamicalStateData::get_int_attr(const std::string& name, size_t p) const
 {
-   std::map<std::string,DSAttribute<int>>::const_iterator a = int_attributes.find(nam);
+   std::map<std::string,DSAttribute<int>>::const_iterator a = int_attributes_.find(name);
    return a->second.get(p);
 }
 
-const float& DynamicalStateData::get_float_attr(const std::string& nam, const size_t p) const
+float DynamicalStateData::get_float_attr(const std::string& name, size_t p) const
 {
-   std::map<std::string,DSAttribute<float>>::const_iterator a = float_attributes.find(nam);
+   std::map<std::string,DSAttribute<float>>::const_iterator a = float_attributes_.find(name);
    return a->second.get(p);
 }
 
-const Vector& DynamicalStateData::get_vector_attr(const std::string& nam, const size_t p) const
+const Vector& DynamicalStateData::get_vector_attr(const std::string& name, size_t p) const
 {
-   std::map<std::string,DSAttribute<Vector>>::const_iterator a = vector_attributes.find(nam);
+   std::map<std::string,DSAttribute<Vector>>::const_iterator a = vector_attributes_.find(name);
    return a->second.get(p);
 }
 
-const Color& DynamicalStateData::get_color_attr(const std::string& nam, const size_t p) const
+const Color& DynamicalStateData::get_color_attr(const std::string& name, size_t p) const
 {
-   std::map<std::string,DSAttribute<Color>>::const_iterator a = color_attributes.find(nam);
+   std::map<std::string,DSAttribute<Color>>::const_iterator a = color_attributes_.find(name);
    return a->second.get(p);
 }
 
     
-const int& DynamicalStateData::id(const size_t p) const
+int DynamicalStateData::id(size_t p) const
 {
-   return ids->second.get(p);
+   return ids_->second.get(p);
 }
 
-const float& DynamicalStateData::mass(const size_t p) const
+float DynamicalStateData::mass(size_t p) const
 {
-   return masses->second.get(p);
+   return masses_->second.get(p);
 }
 
-const float& DynamicalStateData::rad(const size_t p) const
+float DynamicalStateData::rad(size_t p) const
 {
-   return radii->second.get(p);
+   return radii_->second.get(p);
 }
 
-const Vector& DynamicalStateData::pos(const size_t p) const
+const Vector& DynamicalStateData::pos(size_t p) const
 {
-   return positions->second.get(p);
+   return positions_->second.get(p);
 }
 
-const Vector& DynamicalStateData::vel(const size_t p) const
+const Vector& DynamicalStateData::vel(size_t p) const
 {
-   return velocities->second.get(p);
+   return velocities_->second.get(p);
 }
 
-const Vector& DynamicalStateData::accel(const size_t p) const
+const Vector& DynamicalStateData::accel(size_t p) const
 {
-   return accelerations->second.get(p);
+   return accelerations_->second.get(p);
 }
 
-const Color& DynamicalStateData::ci(const size_t p) const
+const Color& DynamicalStateData::ci(size_t p) const
 {
-   return cis->second.get(p);
-}
-
-
-void DynamicalStateData::set_attr(const std::string& nam, const size_t p, const int& value)
-{
-   int_attributes[nam].set(p, value);
-}
-
-void DynamicalStateData::set_attr(const std::string& nam, const size_t p, const float& value)
-{
-   float_attributes[nam].set(p, value);
-}
-
-void DynamicalStateData::set_attr(const std::string& nam, const size_t p, const Vector& value) 
-{
-   vector_attributes[nam].set(p, value);
-}
-
-void DynamicalStateData::set_attr(const std::string& nam, const size_t p, const Color& value) 
-{
-   color_attributes[nam].set(p, value);
+   return cis_->second.get(p);
 }
 
 
-void DynamicalStateData::set_id(const size_t p, const int& value)
+void DynamicalStateData::set_attr(const std::string& name, size_t p, int value)
 {
-   ids->second.set(p, value);
+   int_attributes_[name].set(p, value);
 }
 
-void DynamicalStateData::set_pos(const size_t p, const Vector& value)
+void DynamicalStateData::set_attr(const std::string& name, size_t p, float value)
 {
-   positions->second.set(p, value);
+   float_attributes_[name].set(p, value);
 }
 
-void DynamicalStateData::set_vel(const size_t p, const Vector& value)
+void DynamicalStateData::set_attr(const std::string& name, size_t p, const Vector& value) 
 {
-   velocities->second.set(p, value);
+   vector_attributes_[name].set(p, value);
 }
 
-void DynamicalStateData::set_accel(const size_t p, const Vector& value)
+void DynamicalStateData::set_attr(const std::string& name, size_t p, const Color& value) 
 {
-   accelerations->second.set(p, value);
+   color_attributes_[name].set(p, value);
 }
 
-void DynamicalStateData::set_ci(const size_t p, const Color& value)
+
+void DynamicalStateData::set_id(size_t p, int value)
 {
-   cis->second.set(p, value);
+   ids_->second.set(p, value);
 }
 
-void DynamicalStateData::set_mass(const size_t p, const float& value)
+void DynamicalStateData::set_pos(size_t p, const Vector& value)
 {
-   masses->second.set(p, value);
+   positions_->second.set(p, value);
 }
 
-void DynamicalStateData::set_rad(const size_t p, const float& value)
+void DynamicalStateData::set_vel(size_t p, const Vector& value)
 {
-   radii->second.set(p, value);
+   velocities_->second.set(p, value);
+}
+
+void DynamicalStateData::set_accel(size_t p, const Vector& value)
+{
+   accelerations_->second.set(p, value);
+}
+
+void DynamicalStateData::set_ci(size_t p, const Color& value)
+{
+   cis_->second.set(p, value);
+}
+
+void DynamicalStateData::set_mass(size_t p, float value)
+{
+   masses_->second.set(p, value);
+}
+
+void DynamicalStateData::set_rad(size_t p, float value)
+{
+   radii_->second.set(p, value);
 }
 
 void DynamicalStateData::re_find_main_attrs()
 {
-   positions = vector_attributes.find( "pos" );
-   if( positions == vector_attributes.end() )
+   positions_ = vector_attributes_.find( "pos" );
+   if( positions_ == vector_attributes_.end() )
    {
-      std::cout << "ERROR could not find positions\n";
+      std::cout << "ERROR could not find positions_\n";
    }
-   velocities = vector_attributes.find( "vel" );
-   if( velocities == vector_attributes.end() )
+   velocities_ = vector_attributes_.find( "vel" );
+   if( velocities_ == vector_attributes_.end() )
    {
-      std::cout << "ERROR could not find velocities\n";
+      std::cout << "ERROR could not find velocities_\n";
    }
-   accelerations = vector_attributes.find( "accel" );
-   if( accelerations == vector_attributes.end() )
+   accelerations_ = vector_attributes_.find( "accel" );
+   if( accelerations_ == vector_attributes_.end() )
    {
-      std::cout << "ERROR could not find accelerations\n";
+      std::cout << "ERROR could not find accelerations_\n";
    }
-   masses = float_attributes.find( "mass" );
-   if( masses == float_attributes.end() )
+   masses_ = float_attributes_.find( "mass" );
+   if( masses_ == float_attributes_.end() )
    {
-      std::cout << "ERROR could not find masses\n";
+      std::cout << "ERROR could not find masses_\n";
    }
-   ids = int_attributes.find( "id" );
-   if( ids == int_attributes.end() )
+   ids_ = int_attributes_.find( "id" );
+   if( ids_ == int_attributes_.end() )
    {
-      std::cout << "ERROR could not find ids\n";
+      std::cout << "ERROR could not find ids_\n";
    }
-   cis = color_attributes.find( "ci" );
-   if( cis == color_attributes.end() )
+   cis_ = color_attributes_.find( "ci" );
+   if( cis_ == color_attributes_.end() )
    {
-      std::cout << "ERROR could not find cis\n";
+      std::cout << "ERROR could not find cis_\n";
    }
-   radii = float_attributes.find( "rad" );
-   if( radii == float_attributes.end() )
+   radii_ = float_attributes_.find( "rad" );
+   if( radii_ == float_attributes_.end() )
    {
-      std::cout << "ERROR could not find radii\n";
+      std::cout << "ERROR could not find radii_\n";
    }
 }
 
-int DynamicalStateData::erase_outside_bounds( const Vector& llc, const Vector& urc )
+int DynamicalStateData::EraseOutsideOfBounds( const Vector& llc, const Vector& urc )
 {
    AABB bounds(llc, urc);
    //std::cout << "erase outsdie of bounds" << ": llc " << llc.X() << ' ' << llc.Y() << ' ' << llc.Z() <<  " urc " << urc.X() << ' ' << urc.Y() << ' ' << urc.Z() <<'\n';
    size_t p = 0;
    int count = 0;
-   while( p < nb_items )
+   while( p < nb_items_ )
    {
       const Vector& P = pos(p);
-      if(bounds.isInside(P))
+      if(bounds.IsInside(P))
       {
          p++;
       }
       else
       {
-         for( std::map< std::string, DSAttribute<int> >::iterator a = int_attributes.begin(); a != int_attributes.end(); a++ )
+         for( std::map< std::string, DSAttribute<int> >::iterator a = int_attributes_.begin(); a != int_attributes_.end(); a++ )
          {
             a->second.erase(p);
          }
-         for( std::map< std::string, DSAttribute<float> >::iterator a = float_attributes.begin(); a != float_attributes.end(); a++ )
+         for( std::map< std::string, DSAttribute<float> >::iterator a = float_attributes_.begin(); a != float_attributes_.end(); a++ )
          {
             a->second.erase(p);
          }
-         for( std::map< std::string, DSAttribute<Vector> >::iterator a = vector_attributes.begin(); a != vector_attributes.end(); a++ )
+         for( std::map< std::string, DSAttribute<Vector> >::iterator a = vector_attributes_.begin(); a != vector_attributes_.end(); a++ )
          {
             a->second.erase(p);
          }
-         for( std::map< std::string, DSAttribute<Color> >::iterator a = color_attributes.begin(); a != color_attributes.end(); a++ )
+         for( std::map< std::string, DSAttribute<Color> >::iterator a = color_attributes_.begin(); a != color_attributes_.end(); a++ )
          {
             a->second.erase(p);
          }
          //std::cout << "erased particle: " << p << '\n';
-         nb_items--;
+         nb_items_--;
 	 count++; 
       }
    }
@@ -329,19 +341,19 @@ int DynamicalStateData::erase_outside_bounds( const Vector& llc, const Vector& u
    return count;
 }
 
-DynamicalState pba::CreateDynamicalState(const std::string& nam)
+DynamicalStatePtr CreateDynamicalState(const std::string& name)
 {
-    //return DynamicalState(new DynamicalStateData(nam)); //2 memory alloc header
-    return std::make_shared<DynamicalStateData>(nam);
+    //return DynamicalState(new DynamicalStateData(name)); //2 memory alloc header
+    return std::make_unique<DynamicalStateData>(name);
 }
 
-pba::AABB pba::BoundingBox( const DynamicalState& d )
+pba::AABB BoundingBox(const DynamicalStateData& d)
 {
-   Vector llc = d->pos(0);
-   Vector urc = d->pos(0);
-   for(size_t i = 1; i < d->nb(); i++)
+   Vector llc = d.pos(0);
+   Vector urc = d.pos(0);
+   for(size_t i = 1; i < d.nb(); i++)
    {
-      Vector P = d->pos(i);
+      Vector P = d.pos(i);
       if( P[0] < llc[0] ){ llc[0] = P[0]; }
       if( P[1] < llc[1] ){ llc[1] = P[1]; }
       if( P[2] < llc[2] ){ llc[2] = P[2]; }
@@ -351,3 +363,5 @@ pba::AABB pba::BoundingBox( const DynamicalState& d )
    }
    return pba::AABB(llc,urc);
 }
+
+}//end of pba namespace

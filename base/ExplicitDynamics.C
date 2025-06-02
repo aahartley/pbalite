@@ -1,273 +1,90 @@
+//*******************************************************************
+//
+//   ExplicitDynamics.C
+//
+//   Partial Solvers for pos and vel.
+//
+//
+//
+//*******************************************************************
+
 #include "ExplicitDynamics.h"
+#include "GISolver.h"
 
-using namespace pba;
-//explicit
-AdvancePosition::AdvancePosition(DynamicalState& pq) :PQ(pq){}
-AdvancePosition::~AdvancePosition(){}
-void AdvancePosition::init(){}
-void AdvancePosition::solve(const double dt)
+#include <iostream>
+
+namespace pba
 {
-  #pragma omp parallel for
-  for(size_t i=0; i<PQ->nb(); i++)
-  {
-      PQ->set_pos(i, PQ->pos(i) + PQ->vel(i)*dt);
-  }
-  PQ->set_stage(POSITION_UPDATED);
-
-}
-AdvancePositionSPH::AdvancePositionSPH(SPHState& pq) :PQ(pq){}
-AdvancePositionSPH::~AdvancePositionSPH(){}
-void AdvancePositionSPH::init(){}
-void AdvancePositionSPH::solve(const double dt)
-{
-  #pragma omp parallel for
-  for(size_t i=0; i<PQ->nb(); i++)
-  {
-      PQ->set_pos(i, PQ->pos(i) + PQ->vel(i)*dt);
-  }
-  PQ->set_stage(POSITION_UPDATED);
-
-}
-AdvancePositionSoftBody::AdvancePositionSoftBody(SoftBodyState& pq) :PQ(pq){}
-AdvancePositionSoftBody::~AdvancePositionSoftBody(){}
-void AdvancePositionSoftBody::init(){}
-void AdvancePositionSoftBody::solve(const double dt)
-{
-  #pragma omp parallel for
-  for(size_t i=0; i<PQ->nb(); i++)
-  {
-      PQ->set_pos(i, PQ->pos(i) + PQ->vel(i)*dt);
-  }
-  PQ->set_stage(POSITION_UPDATED);
-
-}
-AdvancePositionRigidBody::AdvancePositionRigidBody(RigidBodyState& pq) :PQ(pq){}
-AdvancePositionRigidBody::~AdvancePositionRigidBody(){}
-void AdvancePositionRigidBody::init(){}
-void AdvancePositionRigidBody::solve(const double dt)
-{
-  #pragma omp parallel for
-  for(size_t i=0; i<PQ->nb(); i++)
-  {
-      PQ->set_pos(i, PQ->pos(i) + PQ->vel(i)*dt);
-  }
-  PQ->set_stage(POSITION_UPDATED);
-
-}
-
-AdvancePositionWithCollisions::AdvancePositionWithCollisions(DynamicalState& pq, CollisionHandler& coll):PQ(pq),CH(coll){}
-AdvancePositionWithCollisions::~AdvancePositionWithCollisions(){}
-void AdvancePositionWithCollisions::init(){}
-void AdvancePositionWithCollisions::solve(const double dt)
+void AdvancePosition::Init(){}
+void AdvancePosition::Solve(double dt)
 {
     #pragma omp parallel for
-    for( size_t i=0;i<PQ->nb();i++ )
+    for (size_t i = 0; i < pq_.nb(); ++i)
     {
-      PQ->set_pos( i, PQ->pos(i) + PQ->vel(i)*dt );
+      pq_.set_pos(i, pq_.pos(i) + pq_.vel(i)*dt);
     }
-    CH.handle_collisions(dt, PQ);
-    PQ->set_stage(POSITION_UPDATED);
+    if (use_coll_ && coll_handler_)
+    {
+      coll_handler_->HandleCollisions(dt, pq_);
+    } 
+    pq_.set_stage(POSITION_UPDATED);
 
 }
-AdvancePositionWithCollisionsSPH::AdvancePositionWithCollisionsSPH(SPHState& pq, CollisionHandler& coll):PQ(pq),CH(coll){}
-AdvancePositionWithCollisionsSPH::~AdvancePositionWithCollisionsSPH(){}
-void AdvancePositionWithCollisionsSPH::init(){}
-void AdvancePositionWithCollisionsSPH::solve(const double dt)
-{
-    #pragma omp parallel for
-    for( size_t i=0;i<PQ->nb();i++ )
-    {
-      PQ->set_pos( i, PQ->pos(i) + PQ->vel(i)*dt );
-    }
-    DynamicalState pq = PQ;
-    CH.handle_collisions(dt, pq);
-    PQ->set_stage(POSITION_UPDATED);
 
-}
-AdvancePositionWithCollisionsSoftBody::AdvancePositionWithCollisionsSoftBody(SoftBodyState& pq, CollisionHandler& coll):PQ(pq),CH(coll){}
-AdvancePositionWithCollisionsSoftBody::~AdvancePositionWithCollisionsSoftBody(){}
-void AdvancePositionWithCollisionsSoftBody::init(){}
-void AdvancePositionWithCollisionsSoftBody::solve(const double dt)
-{
-    #pragma omp parallel for
-    for( size_t i=0;i<PQ->nb();i++ )
-    {
-      PQ->set_pos( i, PQ->pos(i) + PQ->vel(i)*dt );
-    }
-    DynamicalState pq = PQ;
-    CH.handle_collisions(dt, pq);
-    PQ->set_stage(POSITION_UPDATED);
-}
+template<typename StateType>
+AdvanceVelocity<StateType>::AdvanceVelocity(StateType& pq, ForceBase<StateType>& f, float a, float v)
+  : pq_(pq),
+    force_(f),
+    acceleration_clamp_(a),
+    velocity_clamp_(v) {}
 
-AdvancePositionWithCollisionsRigidBody::AdvancePositionWithCollisionsRigidBody(RigidBodyState& pq, CollisionHandler& coll):PQ(pq),CH(coll){}
-AdvancePositionWithCollisionsRigidBody::~AdvancePositionWithCollisionsRigidBody(){}
-void AdvancePositionWithCollisionsRigidBody::init(){}
-void AdvancePositionWithCollisionsRigidBody::solve(const double dt)
-{
-    #pragma omp parallel for
-    for( size_t i=0;i<PQ->nb();i++ )
-    {
-      PQ->set_pos( i, PQ->pos(i) + PQ->vel(i)*dt );
-    }
-    DynamicalState pq = PQ;
-    CH.handle_collisions(dt, pq);
-    PQ->set_stage(POSITION_UPDATED);
-}
-
-AdvanceVelocity::AdvanceVelocity(DynamicalState& pq, Force& f, float a, float v): PQ(pq),force(f),acceleration_clamp(a), velocity_clamp(v){}
-AdvanceVelocity::~AdvanceVelocity(){}
-void AdvanceVelocity::init(){}
-void AdvanceVelocity::solve(const double dt)
+template<typename StateType>
+void AdvanceVelocity<StateType>::Solve(double dt)
 {
 
-  force->compute(PQ, dt); // computes the force and stores (force/mass) in the state vector acceleration member
+  force_.Compute(pq_, dt); // computes the force and stores (force/mass) in the state vector acceleration member
   #pragma omp parallel for
-  for( size_t i=0;i<PQ->nb();i++ )
+  for (size_t i = 0; i < pq_.nb(); ++i)
   {    
-    Vector A = PQ->accel(i);
-    float Amag = A.magnitude();
-    if(Amag > acceleration_clamp)
+    Vector acc = pq_.accel(i);
+    float a_mag = acc.magnitude();
+    if (a_mag > acceleration_clamp_)
     {
-      A *= acceleration_clamp/Amag;
+      acc *= acceleration_clamp_ / a_mag;
     }
-    Vector V = PQ->vel(i) + A*dt;
-    float Vmag = V.magnitude();
-    if(Vmag > velocity_clamp)
+    Vector vel = pq_.vel(i) + acc*dt;
+    float v_mag = vel.magnitude();
+    if (v_mag > velocity_clamp_)
     {
-      V *= velocity_clamp/Vmag;
+      vel *= velocity_clamp_ / v_mag;
     }
-    PQ->set_vel( i, V );
+    pq_.set_vel(i, vel);
   }
-  PQ->set_stage(VELOCITY_UPDATED);
-
-}
-AdvanceVelocitySPH::AdvanceVelocitySPH(SPHState& pq, Force& f, float a, float v): PQ(pq),force(f),acceleration_clamp(a), velocity_clamp(v){}
-AdvanceVelocitySPH::~AdvanceVelocitySPH(){}
-void AdvanceVelocitySPH::init(){}
-void AdvanceVelocitySPH::solve(const double dt)
-{
-
-  force->compute(PQ, dt); // computes the force and stores (force/mass) in the state vector acceleration member
-  #pragma omp parallel for
-  for( size_t i=0;i<PQ->nb();i++ )
-  {    
-    Vector A = PQ->accel(i);
-    float Amag = A.magnitude();
-    if(Amag > acceleration_clamp)
-    {
-      A *= acceleration_clamp/Amag;
-    }
-    Vector V = PQ->vel(i) + A*dt;
-    float Vmag = V.magnitude();
-    if(Vmag > velocity_clamp)
-    {
-      V *= velocity_clamp/Vmag;
-    }
-    PQ->set_vel( i, V );
-  }
-  PQ->set_stage(VELOCITY_UPDATED);
-
-}
-AdvanceVelocitySoftBody::AdvanceVelocitySoftBody(SoftBodyState& pq, Force& f, float a, float v): PQ(pq),force(f),acceleration_clamp(a), velocity_clamp(v){}
-AdvanceVelocitySoftBody::~AdvanceVelocitySoftBody(){}
-void AdvanceVelocitySoftBody::init(){}
-void AdvanceVelocitySoftBody::solve(const double dt)
-{
-  force->compute(PQ, dt); // computes the force and stores (force/mass) in the state vector acceleration member
-  #pragma omp parallel for
-  for( size_t i=0;i<PQ->nb();i++ )
-  {    
-    Vector A = PQ->accel(i);
-    float Amag = A.magnitude();
-    if(Amag > acceleration_clamp)
-    {
-      A *= acceleration_clamp/Amag;
-    }
-    Vector V = PQ->vel(i) + A*dt;
-    float Vmag = V.magnitude();
-    if(Vmag > velocity_clamp)
-    {
-      V *= velocity_clamp/Vmag;
-    }
-    PQ->set_vel( i, V );
-  }
-  PQ->set_stage(VELOCITY_UPDATED);
-}
-AdvanceVelocityRigidBody::AdvanceVelocityRigidBody(RigidBodyState& pq, Force& f, float a, float v): PQ(pq),force(f),acceleration_clamp(a), velocity_clamp(v){}
-AdvanceVelocityRigidBody::~AdvanceVelocityRigidBody(){}
-void AdvanceVelocityRigidBody::init(){}
-void AdvanceVelocityRigidBody::solve(const double dt)
-{
-  force->compute(PQ, dt); // computes the force and stores (force/mass) in the state vector acceleration member
-  #pragma omp parallel for
-  for( size_t i=0;i<PQ->nb();i++ )
-  {    
-    Vector A = PQ->accel(i);
-    float Amag = A.magnitude();
-    if(Amag > acceleration_clamp)
-    {
-      A *= acceleration_clamp/Amag;
-    }
-    Vector V = PQ->vel(i) + A*dt;
-    float Vmag = V.magnitude();
-    if(Vmag > velocity_clamp)
-    {
-      V *= velocity_clamp/Vmag;
-    }
-    PQ->set_vel( i, V );
-  }
-  PQ->set_stage(VELOCITY_UPDATED);
-}
-
-GISolver pba::CreateAdvanceVelocity(DynamicalState& pq, Force& f, float a, float v)
-{
-  return std::make_shared<AdvanceVelocity>(pq, f, a, v);
-}
-GISolver pba::CreateAdvancePosition(DynamicalState& pq)
-{
-    return std::make_shared<AdvancePosition>(pq);
-}
-GISolver pba::CreateAdvancePositionColl(DynamicalState& pq, CollisionHandler& coll )
-{
-  return std::make_shared<AdvancePositionWithCollisions>(pq, coll);
-}
-
-GISolver pba::CreateAdvanceVelocitySPH(SPHState& pq, Force& f, float a, float v)
-{
-  return std::make_shared<AdvanceVelocitySPH>(pq, f, a, v);
-}
-GISolver pba::CreateAdvancePositionSPH(SPHState& pq)
-{
-    return std::make_shared<AdvancePositionSPH>(pq);
-}
-GISolver pba::CreateAdvancePositionCollSPH(SPHState& pq, CollisionHandler& coll )
-{
-  return std::make_shared<AdvancePositionWithCollisionsSPH>(pq, coll);
+  pq_.set_stage(VELOCITY_UPDATED);
 
 }
 
-GISolver pba::CreateAdvanceVelocitySoftBody(SoftBodyState& pq, Force& f, float a, float v)
+template<typename StateType>
+GISolverPtr pba::CreateAdvanceVelocity(StateType& pq, ForceBase<StateType>& f, float a, float v)
 {
-  return std::make_shared<AdvanceVelocitySoftBody>(pq, f, a, v);
-}
-GISolver pba::CreateAdvancePositionSoftBody(SoftBodyState& pq)
-{
-    return std::make_shared<AdvancePositionSoftBody>(pq);
-}
-GISolver pba::CreateAdvancePositionCollSoftBody(SoftBodyState& pq, CollisionHandler& coll )
-{
-  return std::make_shared<AdvancePositionWithCollisionsSoftBody>(pq, coll);
+  return std::make_unique<AdvanceVelocity<StateType>>(pq, f, a, v);
+
 }
 
-GISolver pba::CreateAdvanceVelocityRigidBody(RigidBodyState& pq, Force& f, float a, float v)
-{
-  return std::make_shared<AdvanceVelocityRigidBody>(pq, f, a, v);
-}
-GISolver pba::CreateAdvancePositionRigidBody(RigidBodyState& pq)
-{
-    return std::make_shared<AdvancePositionRigidBody>(pq);
-}
-GISolver pba::CreateAdvancePositionCollRigidBody(RigidBodyState& pq, CollisionHandler& coll )
-{
-  return std::make_shared<AdvancePositionWithCollisionsRigidBody>(pq, coll);
+template GISolverPtr CreateAdvanceVelocity<DynamicalStateData>(
+  DynamicalStateData&, ForceBase<DynamicalStateData>&, float, float);
+template GISolverPtr CreateAdvanceVelocity<SPHStateData>(
+  SPHStateData&, ForceBase<SPHStateData>&, float, float);
+template GISolverPtr CreateAdvanceVelocity<SoftBodyStateData>(
+  SoftBodyStateData&, ForceBase<SoftBodyStateData>&, float, float);
+template GISolverPtr CreateAdvanceVelocity<RigidBodyStateData>(
+  RigidBodyStateData&, ForceBase<RigidBodyStateData>&, float, float);
+
+// Explicit instantiation
+template class AdvanceVelocity<DynamicalStateData>;
+template class AdvanceVelocity<SPHStateData>;
+template class AdvanceVelocity<SoftBodyStateData>;
+template class AdvanceVelocity<RigidBodyStateData>;
+
+
 }

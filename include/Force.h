@@ -1,3 +1,13 @@
+//*******************************************************************
+//
+//   Force.h
+//
+//  Base class for computing forces on different states
+//
+//
+//
+//*******************************************************************
+
 #ifndef __PBA_FORCE_H__
 #define __PBA_FORCE_H__
 
@@ -5,23 +15,30 @@
 #include "SPHState.h"
 #include "SoftBodyState.h"
 #include "RigidBodyState.h"
+
 #include <memory>
 
 namespace pba
 {
+
+/*!
+  Base class for computing forces on different states
+ */
+template<typename StateType>
 class ForceBase
 {
   public:
-    ForceBase(){}
-    //! compute forces on the dynamical state and update the accel attribute(s)
-    virtual void compute(DynamicalState& s, const double dt) = 0;
-    virtual void compute(SPHState& s, const double dt) = 0;
-    virtual void compute(SoftBodyState& s, const double dt) = 0;
-    virtual void compute(RigidBodyState& s, const double dt) = 0;
-
-    virtual ~ForceBase(){};
+    ForceBase() {}
+    //! compute forces on the dynamical state type and update the accel attribute(s)
+    virtual void Compute(StateType& s, double dt) = 0;
+    virtual ~ForceBase() {};
 };
-typedef std::shared_ptr<pba::ForceBase> Force;
+template<typename StateType>
+using ForcePtr = std::unique_ptr<ForceBase<StateType>>;
+using ForceDynamicsPtr = std::unique_ptr<ForceBase<DynamicalStateData>>;
+using ForceSPHPtr = std::unique_ptr<ForceBase<SPHStateData>>;
+using ForceSBDPtr = std::unique_ptr<ForceBase<SoftBodyStateData>>;
+using ForceRBDPtr = std::unique_ptr<ForceBase<RigidBodyStateData>>;
 
 }
 

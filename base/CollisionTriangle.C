@@ -1,92 +1,103 @@
+//*******************************************************************
+//
+//   CollisionTriangle.C
+//
+//   Collision Triangle determines if inside triangle area
+//   handles reflection
+//
+//
+//
+//*******************************************************************
+
 #include "CollisionTriangle.h"
 
-using namespace pba;
+#include <iostream>
+#include <algorithm>
 
-CollisionTriangleRaw::CollisionTriangleRaw(const Vector& V0, const Vector& V1, const Vector& V2) :
-  v0(V0),
-  v1(V1),
-  v2(V2)
+namespace pba
 {
-    e1 = v1 - v0;
-    e2 = v2 - v0;
-    e3 = v2 - v1; //e3 = e2-e1;
-    compute_normal();
 
-    double xllc = v0.X();
-    double yllc = v0.Y();
-    double zllc = v0.Z();
-    if( v1.X() < xllc ){ xllc = v1.X(); }
-    if( v2.X() < xllc ){ xllc = v2.X(); }
-    if( v1.Y() < yllc ){ yllc = v1.Y(); }
-    if( v2.Y() < yllc ){ yllc = v2.Y(); }
-    if( v1.Z() < zllc ){ zllc = v1.Z(); }
-    if( v2.Z() < zllc ){ zllc = v2.Z(); }
+CollisionTriangle::CollisionTriangle(const Vector& v0, const Vector& v1, const Vector& v2)
+  : v0_(v0),
+    v1_(v1),
+    v2_(v2)
+{
+    e1_ = v1_ - v0_;
+    e2_ = v2_ - v0_;
+    e3_ = v2_ - v1_; //e3_ = e2_-e1_;
+    ComputeNormal();
 
-    double xurc = v0.X();
-    double yurc = v0.Y();
-    double zurc = v0.Z();
-    if( v1.X() > xurc ){ xurc = v1.X(); }
-    if( v2.X() > xurc ){ xurc = v2.X(); }
-    if( v1.Y() > yurc ){ yurc = v1.Y(); }
-    if( v2.Y() > yurc ){ yurc = v2.Y(); }
-    if( v1.Z() > zurc ){ zurc = v1.Z(); }
-    if( v2.Z() > zurc ){ zurc = v2.Z(); }
+    double xllc = v0_.X();
+    double yllc = v0_.Y();
+    double zllc = v0_.Z();
+    if (v1_.X() < xllc) { xllc = v1_.X(); }
+    if (v2_.X() < xllc) { xllc = v2_.X(); }
+    if (v1_.Y() < yllc) { yllc = v1_.Y(); }
+    if (v2_.Y() < yllc) { yllc = v2_.Y(); }
+    if (v1_.Z() < zllc) { zllc = v1_.Z(); }
+    if (v2_.Z() < zllc) { zllc = v2_.Z(); }
 
-    aabb = AABB(Vector(xllc,yllc,zllc),Vector(xurc,yurc,zurc));
+    double xurc = v0_.X();
+    double yurc = v0_.Y();
+    double zurc = v0_.Z();
+    if (v1_.X() > xurc) { xurc = v1_.X(); }
+    if (v2_.X() > xurc) { xurc = v2_.X(); }
+    if (v1_.Y() > yurc) { yurc = v1_.Y(); }
+    if (v2_.Y() > yurc) { yurc = v2_.Y(); }
+    if (v1_.Z() > zurc) { zurc = v1_.Z(); }
+    if (v2_.Z() > zurc) { zurc = v2_.Z(); }
+
+    aabb_ = AABB(Vector(xllc,yllc,zllc), Vector(xurc,yurc,zurc));
 }
 
-void CollisionTriangleRaw::compute_normal()
+void CollisionTriangle::ComputeNormal()
 {
-    Vector n = e1 ^ e2;
-    un_normal = n;
+    Vector n = e1_ ^ e2_;
+    un_normal_ = n;
     n.normalize();
-    normal = n;
+    normal_ = n;
 }
-
-
    
-bool CollisionTriangleRaw::hit( const Vector& X0, const Vector& Xu, const Vector& V, const double dt, Vector& XH_cand, double& dtH_cand, float rad) const
+bool CollisionTriangle::Hit(
+    const Vector& x_0, const Vector& x_u, const Vector& v, const double dt,
+    Vector& xh_cand, double& dt_cand, const float rad) const
 {
-    Vector effectiveV = V;
-
     bool hit = false;
-    float fx0 = normal * ((X0) - v0);
-    float fxu = normal * ((Xu) - v0);
-    float vn  = normal * effectiveV ;
+    float fx0 = normal_ * ((x_0) - v0_);
+    float fxu = normal_ * ((x_u) - v0_);
+    float vn  = normal_ * v ;
 
-    if (V*V < 1.0e-12) return hit; // no motion, no collision
+    if (v*v < 1.0e-12) return hit; // no motion, no collision
 
     // Check collision for forward/backward motion
     bool approaching = (dt >= 0) ? (vn < 0) : (vn > 0);
     //init penetration , prevent tunneling
     if (fx0 <= 0.0f && approaching) 
     {
-        dtH_cand = 0;
-        XH_cand  = X0;
+        dt_cand = 0;
+        xh_cand  = x_0;
         hit = true;
         return hit;
     }
-    else if((fxu == 0 || fx0 * fxu < 0 ))/*|| (fxu <=0 && fx0 <=0)*/ hit = true;
-    if(hit)// plane of tri hit, eval barycentric coords
+    else if ((fxu == 0 || fx0 * fxu < 0 )) hit = true;
+    if (hit)// plane of tri hit, eval barycentric coords
     {
-        float nv = normal * V;  // Use real velocity (no flipping)
-        if (std::abs(nv) < 1e-6) nv = (V * normal < 0) ? -1e-6 : 1e-6;
+        float nv = normal_ * v;  
+        if (std::abs(nv) < 1e-6) nv = (v * normal_ < 0) ? -1e-6 : 1e-6;
         
-        XH_cand = X0 + effectiveV * ( (normal * (v0 - X0)) / nv );
-        dtH_cand = (normal * (v0-X0)) / nv; // (positive dt results: should be <= dt )
+        xh_cand = x_0 + v * ( (normal_ * (v0_ - x_0)) / nv );
+        dt_cand = (normal_ * (v0_-x_0)) / nv; // (positive dt results: should be <= dt )
       
         //eval barycentric coords
-        double u = (un_normal * ((XH_cand - v0) ^ e2)) / (un_normal * un_normal);
-        double v = (un_normal * (e1 ^ (XH_cand - v0))) / (un_normal * un_normal);
-        if( !((u >=0 && u <=1) && (v >=0 && v <=1) && (u+v >=0 && u+v <=1)) ) hit = false; // not in tri
-        //std::cout << "Dth: " << dtH_cand << '\n';
-        //if(dtH_cand > dt) std::cout << "dth bigger than dt!!" << dtH_cand << ' ' << dt << '\n';
+        double u = (un_normal_ * ((xh_cand - v0_) ^ e2_)) / (un_normal_ * un_normal_);
+        double v = (un_normal_ * (e1_ ^ (xh_cand - v0_))) / (un_normal_ * un_normal_);
+        if (!((u >=0 && u <=1) && (v >=0 && v <=1) && (u+v >=0 && u+v <=1))) hit = false; // not in tri
 
-        bool valid = (dt >= 0) ? (dtH_cand >= 0 && dtH_cand <= dt) : (dtH_cand <= 0 && dtH_cand >= dt);
+        bool valid = (dt >= 0) ? (dt_cand >= 0 && dt_cand <= dt) : (dt_cand <= 0 && dt_cand >= dt);
 
         if (!valid) 
         {
-            std::cout << "Invalid dtH_cand: " << dtH_cand << " dt: " << dt << "\n";
+            std::cout << "Invalid dt_cand: " << dt_cand << " dt: " << dt << "\n";
         }
     }
 
@@ -94,14 +105,14 @@ bool CollisionTriangleRaw::hit( const Vector& X0, const Vector& Xu, const Vector
 }
 
 //1 sticky means unchanged
-void CollisionTriangleRaw::handle(const Vector& XS, const Vector& VS, const double& dt, 
-    const Vector& XH, const double& dtH, Vector& XR, Vector& VR, float cs, float cr) const
+void CollisionTriangle::Handle(
+    const Vector& v_s, const double dt, const Vector& x_h, 
+    const double dt_h, Vector& x_r, Vector& v_r, const float cs, const float cr) const
 {
-    VR = (cs * VS) - ((cs + cr) * normal * (normal * VS));
-    double remaining_dt =  (dt - dtH);
-    XR = XH + VR * remaining_dt;
+    //std::cout << "handling\n";
+    v_r = (cs * v_s) - ((cs + cr) * normal_ * (normal_ * v_s));
+    double remaining_dt =  (dt - dt_h);
+    x_r = x_h + v_r * remaining_dt;
 }
-CollisionTriangle pba::makeCollisionTriangle(  const Vector& p0, const Vector& p1, const Vector& p2 )
-{
-   return CollisionTriangle( new CollisionTriangleRaw(p0,p1,p2) );
-}
+
+}//end of pba namespace

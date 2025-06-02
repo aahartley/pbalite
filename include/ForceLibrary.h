@@ -1,130 +1,138 @@
+//*******************************************************************
+//
+//   ForceLibrary.h
+//
+//   Library of forces for different states.
+//
+//
+//
+//*******************************************************************
+
 #ifndef __PBA_FORCE_LIBRARY_H__
 #define __PBA_FORCE_LIBRARY_H__
 
+#include "Force.h"
 #include "DynamicalState.h"
 #include "SPHState.h"
 #include "SoftBodyState.h"
 #include "RigidBodyState.h"
-#include "Force.h"
+
 #include <memory>
 
 namespace pba
 {
-class GravityForce : public ForceBase
+
+/*!
+  Gravity Force for all states
+ */
+template<typename StateType>
+class GravityForce : public ForceBase<StateType>
 {
   public:
-    GravityForce(const Vector& g):
-      gravity (g)
-    {}
-    ~GravityForce(){}
-    void compute(DynamicalState& s, const double dt);
-    void compute(SPHState& s, const double dt);
-    void compute(SoftBodyState& s, const double dt);
-    void compute(RigidBodyState& s, const double dt);
+    GravityForce(const Vector& gravity)
+      : gravity_(gravity) {}
+    ~GravityForce() {}
+    void Compute(StateType& s, double dt);
 
-    void set_gravity(const Vector& g){gravity=g;}
-    const Vector& get_gravity() const{return gravity;}
+    void set_gravity(const Vector& gravity) { gravity_ = gravity; }
+    const Vector& get_gravity() const { return gravity_; }
   private:
-    Vector gravity; 
+    Vector gravity_; 
 };
 
-class TaitPressureForce : public ForceBase
+// add more statetypes if needed
+/*!
+  Tait pressure Force for SPH
+ */
+class TaitPressureForce : public ForceBase<SPHStateData>
 {
   public:
-    TaitPressureForce(const float s, const float rest, const float e):
-      strength (s),
-      rho_0 (rest),
-      gamma (e)
-    {}
+    TaitPressureForce(double strength, double rest_dens, double gamma)
+      : strength_(strength),
+        rho_0_(rest_dens),
+        gamma_(gamma) {}
     ~TaitPressureForce(){}
-    void compute(DynamicalState& s, const double dt);
-    void compute(SPHState& s, const double dt);
-    void compute(SoftBodyState& s, const double dt);
-    void compute(RigidBodyState& s, const double dt);
-    void set_strenth(const float s){strength=s;}
-    const float get_strength() const{return strength;}
-    void set_rho0(const float s){rho_0=s;}
-    const float get_rho0() const{return rho_0;}
-    void set_gamma(const float s){gamma=s;}
-    const float get_gamma() const{return gamma;}
+    void Compute(SPHStateData& s, double dt);
+
+    void set_strenth(double s) { strength_ = s; }
+    double get_strength() const { return strength_; }
+
+    void set_rho0(double s) { rho_0_ = s; }
+    double get_rho0() const { return rho_0_; }
+
+    void set_gamma(double s) { gamma_ = s; }
+    double get_gamma() const { return gamma_; }
   private:
-    float strength;
-    float rho_0;
-    float gamma;
+    double strength_;
+    double rho_0_;
+    double gamma_;
 };
 
-
-class HarmonicOscillatorForce : public ForceBase
+/*!
+  Harmonic Oscillator Force for all states
+ */
+template<typename StateType>
+class HarmonicOscillatorForce : public ForceBase<StateType>
 {
   public:
-    HarmonicOscillatorForce(const double& kd) :
-      Kd(kd)
-    {}
+    HarmonicOscillatorForce(double kd)
+      : kd_(kd) {}
     ~HarmonicOscillatorForce(){}
-    void compute(DynamicalState& s, const double dt);
-    void compute(SPHState& s, const double dt);
-    void compute(SoftBodyState& s, const double dt);
-    void compute(RigidBodyState& s, const double dt);
-    // set and gets to be able to change the force strength
-    void set_kd(const double& v){ Kd = v; }
-    const double& get_kd() const { return Kd; }
-    //EXAMPLE USAGE:
-    //Force harmonic_oscillator = make_harmonic_oscillator_force( 1.0 ); // Input parameter is the force strength kd
-    //std::shared_ptr<HarmonicOscillatorForce> f = dynamic_pointer_cast<HarmonicOscillatorForce>(harmonic_oscillator);
-    //f->set_kd( f->get_kd()/1.1 ); // reduces the magnitude of the strength
+    void Compute(StateType& s, double dt);
+
+    void set_kd(double v){ kd_ = v; }
+    double get_kd() const { return kd_; }
   private:
-    double Kd;
+    double kd_;
 };
 
-
-
-class AccumulatingForce : public ForceBase
+/*!
+  Stores vector of forces for all states
+ */
+template<typename StateType>
+class AccumulatingForce : public ForceBase<StateType>
 {
   public:
     AccumulatingForce(){}
     ~AccumulatingForce(){}
-    void compute(DynamicalState& s, const double dt);
-    void compute(SPHState& s, const double dt);
-    void compute(SoftBodyState& s, const double dt);
-    void compute(RigidBodyState& s, const double dt);
-    // Build up the collection of forces to accumulate
-    void add_force(Force& f);
+    void Compute(StateType& s, double dt);
+
+    //! Build up the collection of forces to accumulate
+    void AddForce(ForceBase<StateType>* f);
   private:
-    std::vector<Force> forces;
+    std::vector<ForceBase<StateType>*> forces;
 };
 
-class AccumulatingStrutForce : public pba::ForceBase
+/*!
+  Strut Force for SoftBody (pairs of verts)
+ */
+class AccumulatingStrutForce : public pba::ForceBase<SoftBodyStateData>
 {
   public:
-    AccumulatingStrutForce( const double g, const double f, const bool c ) : spring(g), friction(f), crit_damp(c) {}
-    ~AccumulatingStrutForce(){};
-    void compute(DynamicalState& s, const double dt);
-    void compute(SPHState& s, const double dt);
-    void compute( SoftBodyState& pq, const double dt );
-    void compute(RigidBodyState& s, const double dt);
+    AccumulatingStrutForce(double spring, double friction, bool crit_damp) 
+    : spring_(spring),
+      friction_(friction),
+      crit_damp_(crit_damp) {}
+    ~AccumulatingStrutForce() {}
+    void Compute(SoftBodyStateData& pq, double dt);
   private:
-    double spring;
-    double friction;
-    bool crit_damp;
+    double spring_;
+    double friction_;
+    bool crit_damp_;
 };
 
-//EXAMPLE:
-// Create several forces, in this case: gravity and harmonic oscillator
-//Force gravity = make_gravity_force( Vector(0,-9.8,0) );
-//Force harmonic_oscillator = make_harmonic_oscillator_force( 1.0 );
-// Create for accumulator force
-//Force accumulator = make_accumulating_force();
-// Add our forces to the accumulator, after the needed cast
-//std::shared_ptr<AccumulatingForce> f = dynamic_pointer_cast<AccumulatingForce>(accumulator);
-//f->add_force( gravity );
-//f->add_force( harmonic_oscillator );
-pba::Force CreateGravityForce(const Vector& g);
-pba::Force CreateTaitPressureForce(const float s, const float rest, const float g);
+template<typename StateType>
+ForcePtr<StateType> CreateGravityForce(const Vector& g);
 
-pba::Force CreateHarmonicOscillatorForce(const double& k);
+ForceSPHPtr CreateTaitPressureForce(float strength, float rest_dens, float gamma);
 
-pba::Force CreateAccumulatingForce();
-pba::Force CreateAccumulatingStrutForce(const double g, const double f, const bool c);
+template<typename StateType>
+ForcePtr<StateType> CreateHarmonicOscillatorForce(double k);
+
+template<typename StateType>
+ForcePtr<StateType> CreateAccumulatingForce();
+
+ForceSBDPtr CreateAccumulatingStrutForce(double spring, double friction, bool crit_damp);
 
 }
 

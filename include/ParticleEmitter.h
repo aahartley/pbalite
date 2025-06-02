@@ -16,8 +16,8 @@ class ParticleEmitter
     ParticleEmitter( const Vector& loc, const Vector& velocity );
     ~ParticleEmitter(){}
 
-    void emitCube(DynamicalState& state, int numParticlesPerAxis, const Vector& center);
-    void emitCube(SPHState& state, int numParticlesPerAxis, const Vector& center);
+    void emitCube(DynamicalStateData& state, int numParticlesPerAxis, const Vector& center);
+    void emitCube(SPHStateData& state, int numParticlesPerAxis, const Vector& center);
 
 
     float randf() { return ((float)rand() / RAND_MAX) * 2.0f - 1.0f; } // range: [-1, 1]

@@ -7,6 +7,7 @@
 #include "WCSPHThing.h"
 #include "DFSPHThing.h"
 #include "SoftBodyThing.h"
+#include "RigidBodyThing.h"
 
 
 int main(int argc, char** argv)
@@ -29,6 +30,7 @@ int main(int argc, char** argv)
    //pba::PbaThing mything = pba::CreateWCSPHThing();
    //pba::PbaThing mything = pba::CreateDFSPHThing();
    pba::PbaThing mything = pba::CreateSoftBodyThing();
+   //pba::PbaThing mything = pba::CreateRigidBodyThing();
 
    viewer->AddThing(mything);
 

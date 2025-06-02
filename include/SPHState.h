@@ -1,89 +1,96 @@
+//*******************************************************************
+//
+//   SPHState.h
+//
+//   State attributes for SPH.
+//
+//
+//
+//*******************************************************************
 
 //(weakly incompressible & DFSPH).
 //  DFSPH functions are based off the 2015 paper: https://animation.rwth-aachen.de/media/papers/2015-SCA-DFSPH.pdf
 //  2017 paper, where the equations are written differently (still equivalent): https://animation.rwth-aachen.de/media/papers/2017-TVCG-ViscousDFSPH.pdf
-
 
 #ifndef ____PBA_SPHSTATE_H____
 #define ____PBA_SPHSTATE_H____
 
 #include "DynamicalState.h"
 #include "NeighborSearch.h"
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <cmath>
 
 namespace pba
 {
-
-
+/*!
+  SPH state attribs, density functions, neighbor search
+ */
 class SPHStateData : public DynamicalStateData, public NeighborSearch
 {
   public:
-
-    SPHStateData( const AABB& bounds, const double h, const std::string& nam = "SPHDataNoName" );
+    SPHStateData(const AABB& bounds, double h, const std::string& name = "SPHDataNoName" );
     ~SPHStateData();
 
+    float Weight(size_t p, const Vector& P) const;
+    const Vector GradWeight(size_t p, const Vector& P) const;
 
-    const float get_radius() const { return radius; }
-    void set_radius( const float& v );
-
-    const float get_particle_radius() const { return particle_radius; }
-    const float get_density0() const { return density0; }
-    void set_density0(const float d0);
-    const int get_maxIter() const { return maxIter; }
-    void set_maxIter(int maxi);
-    const bool get_useUserDT() const { return useUserDT; }
-    void set_useUserDT(bool uudt);
-    const float get_meps() const { return m_eps;}
-    const float get_mMaxError() const { return m_maxError;}
-    void set_mMaxError(int mmx);
-    const float get_maxError() const { return maxError;}
-    void set_maxError(int mx);
-    const bool get_ddClamp() const { return dd_clamp;}
-    void set_ddClamp(bool cl);
-    const bool get_neighborParallel() const { return neighbor_parallel;}
-    void set_neighborParallel(bool cl);
-
-    const float weight( size_t p, const Vector& P ) const;
-    const Vector grad_weight( size_t p, const Vector& P ) const;
-
-    void compute_density();
-    void compute_predicted_density(const size_t p, const double dt);
-    void compute_density_derivative(size_t p);
-    void compute_factor();
-    void populate();
+    void ComputeDensity();
+    void ComputePredictedDensity(size_t p, double dt);
+    void ComputeDensityDerivative(size_t p);
+    void ComputeFactor();
+    void Populate();
 
     // float average_density(); //const;
     // float average_density_derivative(); //const;
     // float average_predicted_density(); //const;
-    float max_velocity() const;
+    float MaxVelocity() const;
 
-  
+    float get_radius() const { return radius_; }
+    void set_radius(float v);
+
+    float get_particle_radius() const { return particle_radius_; }
+    float get_density0() const { return density0_; }
+    void set_density0(const float d0);
+
+    int get_max_iter() const { return max_iter_; }
+    void set_max_iter(int maxi);
+
+    bool get_use_user_dt() const { return use_user_dt_; }
+    void set_use_user_dt(bool uudt);
+
+    float get_meps() const { return m_eps_;}
+    float get_m_max_error() const { return m_max_error_;}
+    void set_m_max_error(int mmx);
+
+    float get_max_error() const { return max_error_;}
+    void set_max_error(int mx);
+
+    bool get_dd_clamp() const { return dd_clamp_;}
+    void set_dd_clamp(bool cl);
+
+    bool get_neighbor_parallel() const { return neighbor_parallel_;}
+    void set_neighbor_parallel(bool cl);
+
   private:
-
-    float radius;
-    float particle_radius;
-    float density0;
-    float m_eps;
-    float maxError; //divergence
-    float m_maxError; //density
-    int maxIter;
-    bool dd_clamp;
-    bool useUserDT;
-    bool neighbor_parallel;
-
-
+    float radius_;
+    float particle_radius_;
+    float density0_;
+    float m_eps_;
+    float max_error_; //divergence
+    float m_max_error_; //density
+    int max_iter_;
+    bool dd_clamp_;
+    bool use_user_dt_;
+    bool neighbor_parallel_;
 
 };
 
+using SPHStatePtr =  std::unique_ptr<SPHStateData>;
 
-
-typedef std::shared_ptr<SPHStateData> SPHState;
-
-SPHState CreateSPH( const AABB& bounds, const double h, const std::string& nam = "SPHDataNoName" );
+inline SPHStatePtr CreateSPH(const AABB& bounds, double h, const std::string& name = "SPHDataNoName")
+{
+  return std::make_unique<SPHStateData>(bounds, h, name);
+}
 
 
 }
+
 #endif

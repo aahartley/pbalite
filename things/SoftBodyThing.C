@@ -1,33 +1,28 @@
-
-
 #include "SoftBodyThing.h"
-#include <cstdlib>
+
 #include <GL/gl.h>   // OpenGL itself.
 #include <GL/glu.h>  // GLU support library.
 #include <GL/glut.h> // GLUT support library.
+
 #include <iostream>
+#include <cstdlib>
 
 
-
-using namespace std;
-
-using namespace pba;
-
-
-
-
-
-SoftBodyThing::SoftBodyThing(const std::string nam) :
- PbaThingyDingy (nam),
- emit       (false)
+namespace pba
 {
-    box = makeCollisionSurface();
-    bvh = makeBVH(Vector(-3,-3,-3), Vector(3,3,3), 0, 20, 1);
-    pba::CreateCube(box, 2, 0.5, 2);
-    bvh->addObject(box);
-    bvh->Divide();
+//memeory flow: if remake state- must reset solvers
+SoftBodyThing::SoftBodyThing(const std::string nam) 
+             : PbaThingyDingy (nam),
+               emit           (false)
+{
+    box = CreateCollisionSurface();
+    bvh = CreateBVH(Vector(-3,-3,-3), Vector(3,3,3), 0, 20, 1);
     //pba::CreateInfiniteCube(box, 2, 1, 2);
-    AddCollisionSurface(box);
+    pba::CreateCube(*box, 2, 0.5, 2);
+    bvh->AddObject(*box);
+    bvh->Divide();
+    //if deleting surface, set collisons surf and bvh * to null, reset bvh 
+    AddCollisionSurface(*box);
     state = CreateSoftBodyState("SoftBody");
     Reset();
     // int inc = 2;
@@ -50,25 +45,25 @@ SoftBodyThing::SoftBodyThing(const std::string nam) :
     // state->set_rad(1, 0.5f); //0.075
     // state->add_pair(0,1,0);
     verts.resize(1); tris.resize(1);
-    GeoToSoftBody(verts[0], tris[0], "models/bunny_superlo_scaled.obj", state);
+    GeoToSoftBody(verts[0], tris[0], "models/bunny_superlo_scaled.obj", *state);
     //GeoToSoftBody("models/bunny_lo_scaled.obj", state);
 
     std::cout << state->nb_pairs() << '\n';
-    force = CreateAccumulatingForce();
+    force = CreateAccumulatingForce<SoftBodyStateData>();
 
-    gravityforce = CreateGravityForce(Vector(0,-9.81f,0));
-    struts = CreateAccumulatingStrutForce(10,0.5, false);
-
-    std::shared_ptr<AccumulatingForce> f = dynamic_pointer_cast<AccumulatingForce>(force); 
-	f->add_force(gravityforce);
-    f->add_force(struts);
-    //GISolver a = CreateAdvancePosition(state);
-    GISolver a = CreateAdvancePositionCollSoftBody(state, collisions);
-    GISolver b = CreateAdvanceVelocitySoftBody(state, force, 1.0e9, 1.0e9);
-    GISolver basicsolver = CreateLeapFrogSolver(a,b);
-    basicsolver = CreateGISolverSixthOrder(basicsolver);
-    solver = CreateGISolverSubstep( basicsolver, 2);
-    //solver = CreateBackwardEulerSolver(a, b);
+    gravityforce = CreateGravityForce<SoftBodyStateData>(Vector(0,-9.81f,0));
+    struts = CreateAccumulatingStrutForce(1, 1, false); //10, 0.5
+    //if removing a Force, reset accumulatingforce first
+    AccumulatingForce<SoftBodyStateData>* f = dynamic_cast<AccumulatingForce<SoftBodyStateData>*>(force.get()); 
+	f->AddForce(gravityforce.get());
+    f->AddForce(struts.get());
+    //if resetting state/force/collisions, reset solvers first
+    //if resetting solvers setup, reset solver first
+    a = CreateAdvancePosition(*state, &collisions);
+    b = CreateAdvanceVelocity<SoftBodyStateData>(*state, *force, 1.0e9, 1.0e9);
+    GISolverPtr basicsolver = CreateLeapFrogSolver(a.get(), b.get());
+    basicsolver = CreateGISolverSixthOrder(std::move(basicsolver));
+    solver = CreateGISolverSubstep(std::move(basicsolver), 2);
     std::cout << name << " constructed\n";
 
 }
@@ -82,7 +77,7 @@ void SoftBodyThing::Init( const std::vector<std::string>& args )
     
 void SoftBodyThing::Display() 
 {
-    pba::Display(box);
+    pba::Display(box.get());
     // glPointSize(5.0);
     // glBegin(GL_POINTS);
     // for( size_t i=0;i<state->nb();i++ )
@@ -121,20 +116,23 @@ void SoftBodyThing::Keyboard( unsigned char key, int x, int y )
     if( key == 'e' ){ emit = !emit; }
     if( key == 'z' )
     {
-        std::shared_ptr<GravityForce> f = dynamic_pointer_cast<GravityForce>(gravityforce); 
+        auto* f = dynamic_cast<GravityForce<SoftBodyStateData>*>(gravityforce.get()); 
         Vector wind = f->get_gravity() + Vector(2,0,0);
         f->set_gravity(wind );
+        std::cout << "gravity: " << f->get_gravity().X() << f->get_gravity().Y() << std::endl;
+
     }
     if( key == 'g' )
     {
-        std::shared_ptr<GravityForce> f = dynamic_pointer_cast<GravityForce>(gravityforce); 
+        auto* f = dynamic_cast<GravityForce<SoftBodyStateData>*>(gravityforce.get()); 
         f->set_gravity(f->get_gravity()/1.1);
-        
+        std::cout << "gravity: " << f->get_gravity().Y() << std::endl;
     }
     if( key == 'G' )
     { 
-        std::shared_ptr<GravityForce> f = dynamic_pointer_cast<GravityForce>(gravityforce); 
+        auto* f = dynamic_cast<GravityForce<SoftBodyStateData>*>(gravityforce.get()); 
         f->set_gravity( f->get_gravity()*1.1 );
+        std::cout << "gravity: " << f->get_gravity().Y() << std::endl;
     }
     if( key == 'c' )
     {
@@ -156,13 +154,14 @@ void SoftBodyThing::Keyboard( unsigned char key, int x, int y )
         box->set_coeff_sticky( box->coeff_sticky()*1.1 );
         std::cout << "coefficient of sticky: " << box->coeff_sticky() << std::endl;
     }
-//     if( key == 'l' )
-//     {
-//         GISolver solvera = CreateAdvancePositionColl( state, collisions );
-//         GISolver solverb = CreateAdvanceVelocity(state,force);
-//         solver = CreateLeapFrogSolver(solvera,solverb);
-//         std::cout << "Using Leap Frog solver" << std::endl;
-//     }
+    if( key == 'l' )
+    {
+        solver.reset();
+        a = CreateAdvancePosition(*state, &collisions);
+        b = CreateAdvanceVelocity<SoftBodyStateData>(*state, *force, 1.0e9, 1.0e9);
+        solver = CreateLeapFrogSolver(a.get(), b.get());
+        std::cout << "Using Leap Frog solver" << std::endl;
+    }
 //     if( key == 'n' )
 //     {
 //         GISolver solvera = CreateAdvancePositionColl( state, collisions );
@@ -187,12 +186,12 @@ void SoftBodyThing::solve()
     {
         //emitter.emitCube(state, 6, Vector(0,0,0));
     }
-    solver->solve(dt);
+    solver->Solve(dt);
 }
 
 void SoftBodyThing::Reset()
 {
-    state->clear();
+    state->Clear();
 }
 
 void SoftBodyThing::Usage()
@@ -210,18 +209,24 @@ void SoftBodyThing::Usage()
    cout << "b            use backward euler solver\n";
 }
 
-void SoftBodyThing::AddCollisionSurface(pba::CollisionSurface& s)
+void SoftBodyThing::AddCollisionSurface(CollisionSurface& s)
 {
     std::cout << "Add CollisionSurface\n";
-    box = s;
-    s->set_coeff_restitution(0.5);
+    if(box == nullptr)
+    {
+        std::cout << "adding new surface\n";
+        box = std::make_unique<CollisionSurface>(s);
+    }
+    s.set_coeff_restitution(0.5);
     //s->set_coeff_sticky(0.1);
-    collisions.set_collision_surface(box);
-    collisions.set_bvh(bvh);
-    //collisions.dont_use_bvh();
+    //if deleting bvh/surf, set collision bvh* to nullptr, same for surface
+    collisions.set_collision_surface(box.get());
+    collisions.set_bvh(bvh.get());
 }
 
 
-pba::PbaThing pba::CreateSoftBodyThing(){ return PbaThing( new SoftBodyThing() ); }
+pba::PbaThing CreateSoftBodyThing() { return PbaThing(new SoftBodyThing()); }
+
+}//end of pba namespace
 
 

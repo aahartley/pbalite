@@ -1,5 +1,6 @@
 #include "CollisionPlane.h"
-
+#include <iostream>
+#include <algorithm>
 using namespace pba;
 
 CollisionInfinitePlane::CollisionInfinitePlane(const Vector& norm, const Vector& p0) :

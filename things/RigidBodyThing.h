@@ -69,13 +69,15 @@ class RigidBodyThing: public PbaThingyDingy
     // flag for whether to create more particles
     bool emit;
     RigidBodyState state;
-    GISolver solver;
-    Force force;
-    Force gravityforce;
-    Force struts;
+    GISolverPtr a;
+    GISolverPtr b;
+    GISolverPtr solver;
+    ForceRBDPtr force;
+    ForceRBDPtr gravityforce;
+    ForceRBDPtr struts;
  
     ElasticCollisionHandler collisions;
-    CollisionSurface box;
+    CollisionSurfacePtr box;
     BVH bvh;
     ParticleEmitter emitter;
 

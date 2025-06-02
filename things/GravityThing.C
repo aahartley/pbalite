@@ -21,30 +21,19 @@ GravityThing::GravityThing(const std::string nam) :
  PbaThingyDingy (nam),
  emit       (false)
 {
-    box = makeCollisionSurface();
-    CollisionInfinitePlane bottom(Vector(0,1,0),Vector(0,-3,0));
-    CollisionInfinitePlane top(Vector(0,-1,0),Vector(0,3,0));
-    CollisionInfinitePlane right(Vector(-1,0,0),Vector(3,0,0));
-    CollisionInfinitePlane left(Vector(1,0,0),Vector(-3,0,0));
-    CollisionInfinitePlane front(Vector(0,0,-1),Vector(0,0,3)); //closest to screen
-    CollisionInfinitePlane back(Vector(0,0,1),Vector(0,0,-3)); //(z points to screen)
-    box->addPlane(bottom);
-    box->addPlane(top);
-    box->addPlane(right);
-    box->addPlane(left);
-    box->addPlane(back);
-    box->addPlane(front);
-    AddCollisionSurface(box);
+    box = CreateCollisionSurface();
+    pba::CreateCube(*box, 2, 2, 2);
+    AddCollisionSurface(*box);
     state = CreateDynamicalState("ParticleState");
     Reset();
     int inc = 1;
-    state->add(inc);
+    state->Add(inc);
 
     std::cout << "Emit: Total Points " << state->nb() << std::endl;
     emitter = ParticleEmitter();
     for(size_t i = 0; i < state->nb(); i++)
     {
-        Vector p(0,2.9,0);
+        Vector p(0,1,0);
         Vector v(0,0,0);
         Color c(0,0,1,1);
         state->set_pos(i,p);
@@ -55,16 +44,16 @@ GravityThing::GravityThing(const std::string nam) :
 
     }
 
-    force = CreateAccumulatingForce();
+    force = CreateAccumulatingForce<DynamicalStateData>();
 
-    gravityforce = CreateGravityForce(Vector(0,-9.81f,0));
+    gravityforce = CreateGravityForce<DynamicalStateData>(Vector(0,-9.81f,0));
 
-    std::shared_ptr<AccumulatingForce> f = dynamic_pointer_cast<AccumulatingForce>(force); 
-	f->add_force(gravityforce);
+    AccumulatingForce<DynamicalStateData>* f = dynamic_cast<AccumulatingForce<DynamicalStateData>*>(force.get()); 
+	f->AddForce(gravityforce.get());
     //GISolver a = CreateAdvancePosition(state);
-    GISolver a = CreateAdvancePositionColl(state, collisions);
-    GISolver b = CreateAdvanceVelocity(state, force, 1.0e9, 1.0e9);
-    solver = CreateForwardEulerSolver(a, b);
+    a = CreateAdvancePosition(*state, &collisions);
+    b = CreateAdvanceVelocity(*state, *force, 1.0e9, 1.0e9);
+    solver = CreateForwardEulerSolver(a.get(), b.get());
     std::cout << name << " constructed\n";
 
 }
@@ -78,7 +67,7 @@ void GravityThing::Init( const std::vector<std::string>& args )
     
 void GravityThing::Display() 
 {
-    pba::DisplayInfinitePlanes(box);
+    pba::Display(box.get());
     glPointSize(5.0);
     glBegin(GL_POINTS);
     for( size_t i=0;i<state->nb();i++ )
@@ -99,19 +88,19 @@ void GravityThing::Keyboard( unsigned char key, int x, int y )
     if( key == 'e' ){ emit = !emit; }
     if( key == 'z' )
     {
-        std::shared_ptr<GravityForce> f = dynamic_pointer_cast<GravityForce>(gravityforce); 
+        auto* f = dynamic_cast<GravityForce<DynamicalStateData>*>(gravityforce.get()); 
         Vector wind = f->get_gravity() + Vector(2,0,0);
         f->set_gravity(wind );
     }
     if( key == 'g' )
     {
-        std::shared_ptr<GravityForce> f = dynamic_pointer_cast<GravityForce>(gravityforce); 
+        auto* f = dynamic_cast<GravityForce<DynamicalStateData>*>(gravityforce.get()); 
         f->set_gravity(f->get_gravity()/1.1);
         
     }
     if( key == 'G' )
     { 
-        std::shared_ptr<GravityForce> f = dynamic_pointer_cast<GravityForce>(gravityforce); 
+        auto* f = dynamic_cast<GravityForce<DynamicalStateData>*>(gravityforce.get()); 
         f->set_gravity( f->get_gravity()*1.1 );
     }
     if( key == 'c' )
@@ -136,23 +125,26 @@ void GravityThing::Keyboard( unsigned char key, int x, int y )
     }
     if( key == 'l' )
     {
-        GISolver solvera = CreateAdvancePositionColl( state, collisions );
-        GISolver solverb = CreateAdvanceVelocity(state,force, 1.0e9, 1.0e9);
-        solver = CreateLeapFrogSolver(solvera,solverb);
+        solver.reset();
+        b = CreateAdvanceVelocity<DynamicalStateData>(*state, *force, 1.0e9, 1.0e9);
+        a = CreateAdvancePosition( *state, &collisions );
+        solver = CreateForwardEulerSolver(a.get(),b.get()); 
         std::cout << "Using Leap Frog solver" << std::endl;
     }
     if( key == 'n' )
     {
-        GISolver solvera = CreateAdvancePositionColl( state, collisions );
-        GISolver solverb = CreateAdvanceVelocity(state,force, 1.0e9, 1.0e9);
-        solver = CreateForwardEulerSolver(solvera,solverb); // forward
+        solver.reset();
+        b = CreateAdvanceVelocity<DynamicalStateData>(*state, *force, 1.0e9, 1.0e9);
+        a = CreateAdvancePosition( *state, &collisions );
+        solver = CreateForwardEulerSolver(a.get(),b.get()); 
    std::cout << "Using Forward Euler solver" << std::endl;
     }
     if( key == 'b' )
     {
-        GISolver solverb = CreateAdvanceVelocity(state,force, 1.0e9, 1.0e9);
-        GISolver solvera = CreateAdvancePositionColl( state, collisions );
-        solver = CreateForwardEulerSolver(solverb,solvera); //backward
+        solver.reset();
+        b = CreateAdvanceVelocity<DynamicalStateData>(*state, *force, 1.0e9, 1.0e9);
+        a = CreateAdvancePosition( *state, &collisions );
+        solver = CreateForwardEulerSolver(a.get(),b.get()); 
         std::cout << "Using Backward Euler solver" << std::endl;
     }
 
@@ -163,14 +155,14 @@ void GravityThing::solve()
 {
     if(emit)
     {
-        emitter.emitCube(state, 6, Vector(0,0,0));
+        emitter.emitCube(*state, 6, Vector(0,0,0));
     }
-    solver->solve(dt);
+    solver->Solve(dt);
 }
 
 void GravityThing::Reset()
 {
-    state->clear();
+    state->Clear();
 }
 
 void GravityThing::Usage()
@@ -188,13 +180,16 @@ void GravityThing::Usage()
    cout << "b            use backward euler solver\n";
 }
 
-void GravityThing::AddCollisionSurface(pba::CollisionSurface& s)
+void GravityThing::AddCollisionSurface(CollisionSurface& s)
 {
     std::cout << "Add CollisionSurface\n";
-    box = s;
-    s->set_coeff_restitution(0.5);
+    if(box == nullptr)
+    {
+        box = std::make_unique<CollisionSurface>(s);
+    }
+    s.set_coeff_restitution(0.5);
     //s->set_coeff_sticky(0.1);
-    collisions.set_collision_surface(box);
+    collisions.set_collision_surface(box.get());
 }
 
 
