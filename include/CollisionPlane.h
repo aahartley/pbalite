@@ -1,33 +1,47 @@
+//*******************************************************************
+//
+//   CollisionPlane.h
+//
+//   Collision Infinite Plane determines if hit plane
+//   handles reflection
+//
+//
+//
+//*******************************************************************
+
 #ifndef __PBA_COLLISIONPLANE_H__
 #define __PBA_COLLISIONPLANE_H__
   
 #include "Vector.h"
 
 
-  
 namespace pba
 {
-  
+/*!
+  Collision Triangle does barycentric coords check
+  handles refelction
+ */   
 class CollisionInfinitePlane
 {
   public:
-    CollisionInfinitePlane(){ P0=Vector(0,0,0); normal = Vector(0,0,0); }
+    CollisionInfinitePlane(){ p0_ = Vector(0,0,0); normal_ = Vector(0,0,0); }
     CollisionInfinitePlane(const Vector& normal, const Vector& p0);
     ~CollisionInfinitePlane(){}
     
-    bool hit(const Vector& X0, const Vector& Xu, const Vector& V, const double dt, Vector& XH_cand, double& dtH_cand, float radius) const;
-    // bool hit( const Vector& XS, const Vector VS, const double& dt, Vector& XH, double& dtH ) const;
+    //! If in plane, returns true, then xh_cand and dt_cand are filled with the hit point and hit time.
+    bool Hit(
+      const Vector& x_0, const Vector& x_u, const Vector& v, double dt, Vector& xh_cand, double& dt_cand, float rad) const;
     
-    //It returns true, then XH and dtH are filled with the hit point and hit time.
-    // Takes in hit data and returns reflected position and velocity
-    void handle(const Vector& XS, const Vector& VS, const double& dt, const Vector& XH, const double& dtH, Vector& XR, Vector& VR, float cs, float cr) const;  
+    //! Takes in hit data and returns reflected position and velocity
+    void Handle(
+      const Vector& v_s, double dt, const Vector& x_h, double dt_h, Vector& x_r, Vector& v_r, float cs, float cr) const;   
 
-    const Vector& getP0(){ return P0; } 
-    const Vector& getNormal(){ return normal; } 
+    const Vector& getP0(){ return p0_; } 
+    const Vector& getNormal(){ return normal_; } 
 
   private:
-    Vector normal;
-    Vector P0;
+    Vector normal_;
+    Vector p0_;
   
 };
   

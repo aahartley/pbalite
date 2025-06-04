@@ -23,7 +23,7 @@ AABB::~AABB(){}
 
 bool AABB::IsInside(const Vector& P) const
 {
-    for(int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i)
     {
        if (P[i] < llc_[i]) { return false; }
        if (P[i] > urc_[i]) { return false; }
@@ -31,7 +31,7 @@ bool AABB::IsInside(const Vector& P) const
     return true;
 }
 
-void AABB::Split(int component, AABB& aabb0, AABB& aabb1) const
+void AABB::Split(const int component, AABB& aabb0, AABB& aabb1) const
 {
     Vector center = (llc_ + urc_) * 0.5;
     //lower
@@ -57,14 +57,14 @@ bool AABB::Intersects(const AABB& aabb) const
     return true;
 }
 
-const Vector& AABB::getBounds(int sign) const
+const Vector& AABB::getBounds(const int sign) const
 {
     if (sign) return urc_;
     else return llc_;
 }
 
 //https://people.csail.mit.edu/amy/papers/box-jgt.pdf
-bool AABB::RayIntersects(const Ray& r, float t0, float t1) const 
+bool AABB::RayIntersects(const Ray& r, const float t0, const float t1) const 
 {
     float tmin = (getBounds(r.sign[0]).X() - r.origin.X()) * r.inv_direction.X();
     float tmax = (getBounds(1 - r.sign[0]).X() - r.origin.X()) * r.inv_direction.X();

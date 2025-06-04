@@ -30,7 +30,7 @@ void ExplicitViscosity::Compute(SPHStateData& s, const double dt)
         const Vector& P = s.pos(p);
         const Vector& V = s.vel(p);
         std::vector<size_t> neighbors;
-        s.neighbors_list(neighbors, P, s.get_neighbor_parallel());
+        s.NeighborsList(neighbors, P, s.get_neighbor_parallel());
     
         Vector laplacian{};
         Vector viscosity_force{}; 
@@ -48,7 +48,7 @@ void ExplicitViscosity::Compute(SPHStateData& s, const double dt)
     
         laplacian = (2*(dimensions+2) * laplacian);
         viscosity_force = (mass * kinematic_viscosity) * laplacian;
-        s.set_accel(p, s.accel(p) + (viscosity_force)/s.mass(p)); // / by mass?
+        s.set_accel(p, s.accel(p) + (viscosity_force) / s.mass(p)); // / by mass?
         #pragma omp critical
         {
             if (std::isnan(s.accel(p).X()) || std::isnan(s.accel(p).Y()) || std::isnan(s.accel(p).Z())) 

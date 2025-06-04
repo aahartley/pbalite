@@ -24,7 +24,7 @@ struct CollisionData
 {
   double hit_time;
   CollisionTriangle* tri;
-  CollisionInfinitePlane plane;
+  CollisionInfinitePlane* plane;
   bool hit_tri;
   bool hit_plane;
   size_t hit_index;
@@ -45,11 +45,14 @@ class CollisionSurface
   
     void AddTriangle(const CollisionTriangle& t);
     void AddPlane(const CollisionInfinitePlane& p);
+    //! Clear Plane and Tri vectors
     void Clear() { plane_elements_.clear(); tri_elements_.clear(); } 
 
+    //! Number of Triangles
     size_t triangle_size() const { return tri_elements_.size(); }
     size_t plane_size() const { return plane_elements_.size(); }
   
+    //! Determine if a particle hit a triangle, and if so populate data with first collision
     bool Hit(const Vector& X0, const Vector& XU, const Vector& V, double tmax, CollisionData& t, float radius);
   
     CollisionTriangle& get_triangle(size_t i) { return tri_elements_[i]; }
@@ -66,10 +69,10 @@ class CollisionSurface
     bool use_points() const { return points_; }
   
     void set_coeff_restitution(double v) { coeff_of_restitution_ = v; }
-    const double& coeff_restitution() const { return coeff_of_restitution_; }
+    double coeff_restitution() const { return coeff_of_restitution_; }
   
     void set_coeff_sticky(double v) { coeff_of_sticky_ = v; }
-    const double& coeff_sticky() const { return coeff_of_sticky_; }
+    double coeff_sticky() const { return coeff_of_sticky_; }
     
   private:
     bool visible_;
@@ -91,4 +94,4 @@ CollisionSurfacePtr CreateCollisionSurface();
   
 } //end of pba namespace
   
-#endif
+#endif // __PBA_COLLISIONSURFACE_H__

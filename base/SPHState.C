@@ -78,7 +78,7 @@ float SPHStateData::Weight(const size_t p, const Vector& position) const
     return res;
 }
 
-const Vector SPHStateData::GradWeight(const size_t p, const Vector& position) const
+Vector SPHStateData::GradWeight(const size_t p, const Vector& position) const
 {
     Vector res; 
     Vector dist = (position- pos(p));
@@ -116,7 +116,7 @@ void SPHStateData::ComputeDensity()
         float density = 0.0;
         const Vector& position = pos(p);
         std::vector<size_t> neighbors;
-        neighbors_list(neighbors, position, neighbor_parallel_);
+        NeighborsList(neighbors, position, neighbor_parallel_);
         //std::cout << p << ": " <<cells.size() << '\n';
         for (size_t a = 0; a < neighbors.size(); a++)
         {
@@ -152,7 +152,7 @@ void SPHStateData::ComputePredictedDensity(const size_t p, const double dt)
     const Vector& position = pos(p);
     const Vector& velocity = vel(p);
     std::vector<size_t> neighbors;
-    neighbors_list(neighbors, position, neighbor_parallel_);
+    NeighborsList(neighbors, position, neighbor_parallel_);
 
     for (size_t a = 0; a < neighbors.size(); ++a)
     {
@@ -187,7 +187,7 @@ void SPHStateData::ComputeDensityDerivative(const size_t p)
     const Vector& position = pos(p);
     const Vector& velocity = vel(p);
     std::vector<size_t> neighbors;
-    neighbors_list(neighbors, position, neighbor_parallel_);
+    NeighborsList(neighbors, position, neighbor_parallel_);
 
     for (size_t a = 0; a < neighbors.size(); ++a)
     {
@@ -220,7 +220,7 @@ void SPHStateData::ComputeFactor()
         Vector grad_p_i(0,0,0); //pressure gradient of ith particle
         const Vector& position = pos(p);
         std::vector<size_t> neighbors;
-        neighbors_list(neighbors, position, neighbor_parallel_);
+        NeighborsList(neighbors, position, neighbor_parallel_);
 
         for (size_t a = 0; a < neighbors.size(); ++a)
         {         
@@ -290,14 +290,14 @@ void SPHStateData::set_max_error(int mx)
 
 void SPHStateData::set_density0(float d0)
 {
-   if (d0 == 0) d0 =1;
+   if (d0 == 0) d0 = 1;
    density0_ = d0;
 }
-void SPHStateData::set_dd_clamp(bool cl)
+void SPHStateData::set_dd_clamp(const bool cl)
 {
    dd_clamp_ = cl;
 }
-void SPHStateData::set_neighbor_parallel(bool np)
+void SPHStateData::set_neighbor_parallel(const bool np)
 {
    neighbor_parallel_ = np;
 }

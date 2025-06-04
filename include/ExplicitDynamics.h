@@ -22,7 +22,9 @@
 
 namespace pba
 {
-
+/*!
+  Integrate position, handle collisions if on
+ */
 class AdvancePosition : public GISolverBase
 {
   public:
@@ -38,7 +40,9 @@ class AdvancePosition : public GISolverBase
     CollisionHandlerBase* coll_handler_;
     bool use_coll_;
 };
-
+/*!
+  Integrate vel based on acc from forces
+ */
 template<typename StateType>
 class AdvanceVelocity : public GISolverBase
 {
@@ -72,7 +76,6 @@ inline GISolverPtr CreateAdvancePosition(DynamicalStateData& pq, CollisionHandle
 }
 
 
+} //ennd of pba namespace
 
-}
-
-#endif
+#endif //__PBA_INTEGRATORS_H__

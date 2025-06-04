@@ -38,6 +38,6 @@ inline ForceSPHPtr CreateExplicitViscosity(float dv)
   return std::make_unique<ExplicitViscosity>(dv);
 }
 
-}
+} //end of pba namespace
 
-#endif
+#endif //__PBA_VISCOSITY_H__

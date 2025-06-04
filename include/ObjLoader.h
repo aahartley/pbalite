@@ -1,12 +1,23 @@
+//*******************************************************************
+//
+//   ObjLoader.h
+//
+//   OBJ loader
+//
+//
+//
+//*******************************************************************
+
 #ifndef OBJ_LOADER_H
 #define OBJ_LOADER_H
+
+#include "Vector.h"
 
 #include <vector>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include "Vector.h"
 
 namespace pba
 {
@@ -25,7 +36,7 @@ struct Triangle
 struct TriangleV
 {
   TriangleV(){}
-  TriangleV(Vector vv1, Vector vv2, Vector vv3) : v1(vv1), v2(vv2), v3(vv3)
+  TriangleV(const Vector& vv1, const Vector& vv2, const Vector& vv3) : v1(vv1), v2(vv2), v3(vv3)
   {
     e1 = v2 - v1;
     e2 = v3 - v1;
@@ -161,5 +172,5 @@ public:
     }
 };
     
-} 
+} //end of pba namespace
 #endif // OBJ_LOADER_H

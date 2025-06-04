@@ -83,6 +83,7 @@
         "BVH.C": "cpp",
         "Matrix.C": "cpp",
         "RigidBodyState.C": "cpp",
-        "RigidBodyThing.C": "cpp"
+        "RigidBodyThing.C": "cpp",
+        "iomanip": "cpp"
     }
 }

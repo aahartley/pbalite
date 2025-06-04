@@ -57,51 +57,71 @@ void CollisionTriangle::ComputeNormal()
     n.normalize();
     normal_ = n;
 }
-   
+ 
 bool CollisionTriangle::Hit(
-    const Vector& x_0, const Vector& x_u, const Vector& v, const double dt,
+    const Vector& x_0, const Vector& x_u, const Vector& vel, const double dt,
     Vector& xh_cand, double& dt_cand, const float rad) const
 {
-    bool hit = false;
-    float fx0 = normal_ * ((x_0) - v0_);
-    float fxu = normal_ * ((x_u) - v0_);
-    float vn  = normal_ * v ;
-
-    if (v*v < 1.0e-12) return hit; // no motion, no collision
-
-    // Check collision for forward/backward motion
-    bool approaching = (dt >= 0) ? (vn < 0) : (vn > 0);
-    //init penetration , prevent tunneling
-    if (fx0 <= 0.0f && approaching) 
+    float fx0 = normal_ * (x_0 - v0_);
+    float fxu = normal_ * (x_u - v0_);
+    float nv = normal_ * vel;
+    // moving parallel to normal 
+    if (std::abs(nv) == 1.0e-6) 
     {
-        dt_cand = 0;
-        xh_cand  = x_0;
-        hit = true;
-        return hit;
+        return false; 
     }
-    else if ((fxu == 0 || fx0 * fxu < 0 )) hit = true;
-    if (hit)// plane of tri hit, eval barycentric coords
+
+    bool hit = false;
+    // end pos in plane, opposite sides, start pos on/behind plan while moving opposite of normal
+    if ((fxu == 0) || (fx0 * fxu < 0) || (fx0 <= 0 && nv < 0)) 
     {
-        float nv = normal_ * v;  
-        if (std::abs(nv) < 1e-6) nv = (v * normal_ < 0) ? -1e-6 : 1e-6;
-        
-        xh_cand = x_0 + v * ( (normal_ * (v0_ - x_0)) / nv );
-        dt_cand = (normal_ * (v0_-x_0)) / nv; // (positive dt results: should be <= dt )
-      
-        //eval barycentric coords
+        hit = true;
+    }
+
+    if (hit) 
+    {
+        //if starting slightly below or above plane and moving opposite of normal
+        if (fx0 >= -1e-6 && fx0 <= 1e-6 && nv < 0) 
+        {
+            int sign = (dt > 0) ? 1 : -1;
+            if (fx0 > 0) dt_cand = 1.0e-6 * sign;
+            else dt_cand = 0;
+            if (fx0 < 0) xh_cand = x_0 + (-fx0 * normal_); //project to surface?
+            else xh_cand = x_0;
+        } 
+        else 
+        {
+            dt_cand = (normal_ * (v0_ - x_0)) / nv;
+            if (std::abs(dt_cand) < 1e-6) return false; // avoid jitter
+            xh_cand = x_0 + vel * dt_cand;
+        }
+
+        // Barycentric check with tolerance
+        const double tol = 1e-6;
         double u = (un_normal_ * ((xh_cand - v0_) ^ e2_)) / (un_normal_ * un_normal_);
         double v = (un_normal_ * (e1_ ^ (xh_cand - v0_))) / (un_normal_ * un_normal_);
-        if (!((u >=0 && u <=1) && (v >=0 && v <=1) && (u+v >=0 && u+v <=1))) hit = false; // not in tri
+        
+        if (!(u >= -tol && v >= -tol && u + v <= 1.0 + tol)) 
+        {
+            return false; // Not inside triangle
+        }
 
+        // Validate collision time
         bool valid = (dt >= 0) ? (dt_cand >= 0 && dt_cand <= dt) : (dt_cand <= 0 && dt_cand >= dt);
-
+        bool valid2 = std::abs(dt_cand) <= std::abs(dt);
         if (!valid) 
         {
             std::cout << "Invalid dt_cand: " << dt_cand << " dt: " << dt << "\n";
+            return false;
         }
-    }
+         if (!valid2) 
+        {
+            std::cout << "Invalid dt_cand222222: " << dt_cand << " dt: " << dt << "\n";
+        }
 
-    return hit;
+        return true;
+    }
+    return false;
 }
 
 //1 sticky means unchanged

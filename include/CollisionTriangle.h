@@ -24,6 +24,7 @@ namespace pba
 class CollisionTriangle
 {
   public:
+    //! Inits a triangle with all zeros
     CollisionTriangle() 
       : v0_(Vector(0,0,0)), 
         v1_(Vector(0,0,0)), 
@@ -76,6 +77,6 @@ class CollisionTriangle
 };
 
 
-}
+} //end of pba namespace
   
-#endif
+#endif // __PBA_COLLISION_TRI_H__

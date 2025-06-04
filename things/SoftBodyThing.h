@@ -23,7 +23,7 @@ class SoftBodyThing: public PbaThingyDingy
     //! Initialization, including GLUT initialization.
     //! Called once at the beginning.  Could be used
     //! to set up things once.
-    void Init( const std::vector<std::string>& args );
+    void Init(const std::vector<std::string>& args);
    
     /////////////////////////////////////////////////////////////// 
     // CASCADING CALLBACK FUNCTIONS 
@@ -39,7 +39,7 @@ class SoftBodyThing: public PbaThingyDingy
 
     //! Implements responses to keyboard events 
     //! This is called when you hit a key
-    void Keyboard( unsigned char key, int x, int y );
+    void Keyboard(unsigned char key, int x, int y);
 
     //! Implements simulator updates during an idle period
     //! This is where the update process is coded
@@ -56,6 +56,7 @@ class SoftBodyThing: public PbaThingyDingy
     //! here as to what the keyboard option is.
     void Usage();
     void AddCollisionSurface(CollisionSurface& s);
+    
   private:
     // flag for whether to create more particles
     bool emit;

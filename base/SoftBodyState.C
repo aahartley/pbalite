@@ -1,8 +1,19 @@
+//*******************************************************************
+//
+//   SoftBodyState.C
+//
+//  SoftBodyState attribs with edges
+//
+//
+//
+//*******************************************************************
+
 #include "SoftBodyState.h"
+
+#include <iostream>
 
 namespace pba
 {
-
 
 SoftBodyStateData::SoftBodyStateData(const std::string& name) 
   : DynamicalStateData(name+"SoftBodyStateData")
@@ -13,7 +24,7 @@ SoftBodyStateData::SoftBodyStateData(const std::string& name)
 
 SoftBodyStateData::~SoftBodyStateData(){}
 
-void SoftBodyStateData::AddPair(size_t i, size_t j, size_t ind)
+void SoftBodyStateData::AddPair(const size_t i, const size_t j, const size_t ind)
 {
     double l_ab = (pos(j) - pos(i)).magnitude();
     //if(L_ab > 0.2) return;

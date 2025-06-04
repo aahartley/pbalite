@@ -1,5 +1,17 @@
+//*******************************************************************
+//
+//   DFSPHSolver.h
+//
+//   DFSPH Solver with CFL condition
+//   Two Pressure solvers
+//
+//
+//
+//*******************************************************************
+
 //  DFSPH functions are based off the 2015 paper: https://animation.rwth-aachen.de/media/papers/2015-SCA-DFSPH.pdf
 //  2017 paper, where the equations are written differently (still equivalent): https://animation.rwth-aachen.de/media/papers/2017-TVCG-ViscousDFSPH.pdf
+
 #ifndef ____PBA_DFSPHSOLVER_H____
 #define ____PBA_DFSPHSOLVER_H____
 
@@ -8,12 +20,14 @@
 #include "Viscosity.h"
 #include "GISolver.h"
 #include "CollisionHandler.h"
-#include <chrono>
 
 
 namespace pba
 {
-
+/*!
+  DFSPH solver 
+  Two pressure solves: constant density, divergence free
+ */  
 class DFSPHSolver : public GISolverBase
 {
   public:
@@ -29,21 +43,29 @@ class DFSPHSolver : public GISolverBase
         user_dt_(0.001),
         dt_(0.001) {}
 
-
     ~DFSPHSolver(){}
     
     void Init();
     void Solve(double dt);
-
+    //! Integrate velocities
     void advance_velocity();
+    //! Integrate positions
     void advance_position();
+    //! Enforce constant density: PPE 1 (Alg. 3): ρ∗i - ρ0 = 0
     void correct_density_error();
+    //! Jacobi like iterativ solve until end of iterations or correct density error (ki)
     void density_solve_iteration(float& avg_density_error);
+    //! Enforce divergence free velocity field: Dρi/Dt = 0
     void correct_divergence_error();
+    //! Jacobi like iterativ solve until end of iterations or correct density error (kiv)
     void divergence_solve_iteration(float& avg_density_error);
+    //! Compute pressure accelerations using ki/v
     void compute_pressure_acc(size_t p, const std::string& type);
+    //! Compute error in density due to pressure
     float compute_error_force(size_t p, const std::string& type);
+    //! CFL condition or user input
     void get_timestep();
+    //! Temporary collision detection test
     void fakecs();
 
     float get_velocity_clamp() const { return velocity_clamp_; }
@@ -61,8 +83,6 @@ class DFSPHSolver : public GISolverBase
     float velocity_clamp_;
     float user_dt_;
     float dt_;
-
-
 };
 
 inline GISolverPtr CreateDFSPHSolver(
@@ -73,7 +93,6 @@ inline GISolverPtr CreateDFSPHSolver(
 }
 
 
+}// end of pba namespace
 
-}
-
-#endif
+#endif // ____PBA_DFSPHSOLVER_H____

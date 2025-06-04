@@ -1,32 +1,35 @@
+//*******************************************************************
+//
+//   ParticleEmitter.C
+//
+//   Particle emissions
+//
+//
+//
+//*******************************************************************
+
 #include "ParticleEmitter.h"
 #include <iostream>
 
 namespace pba
 {
 
-ParticleEmitter::ParticleEmitter() :
-    location      (Vector(0,0,0)),
-    velocity (Vector(0,0,0)),
-    rate(0),
-    particle_color(Color(0,0,1,1))
+ParticleEmitter::ParticleEmitter() 
+  : location_(Vector(0,0,0)),
+    velocity_(Vector(0,0,0)),
+    rate_(0),
+    particle_color_(Color(0,0,1,1)) {}
+
+
+ParticleEmitter::ParticleEmitter(const Vector& location, const Vector& vel) 
+  : location_(location),
+    velocity_(vel),
+    rate_(0),
+    particle_color_(Color(0,0,1,1)) {}
+
+
+void ParticleEmitter::EmitCube(DynamicalStateData& state, const int numParticlesPerAxis, const Vector& center)
 {
-}
-
-
-ParticleEmitter::ParticleEmitter( const Vector& loc, const Vector& vel) :
-    location      (loc),
-    velocity (vel),
-    rate(0),
-    particle_color(Color(0,0,1,1))
-{
-}
-
-
-void ParticleEmitter::emitCube(DynamicalStateData& state, int numParticlesPerAxis, const Vector& center)
-{
-
-
-
     int numPoints = numParticlesPerAxis * numParticlesPerAxis * numParticlesPerAxis;
     //int numPoints = rate * rate * rate;
     state.Add(numPoints);
@@ -35,11 +38,11 @@ void ParticleEmitter::emitCube(DynamicalStateData& state, int numParticlesPerAxi
 
     //numParticlesPerAxis = rate; 
    
-    for (int x = 0; x < numParticlesPerAxis; x++)
+    for (int x = 0; x < numParticlesPerAxis; ++x)
     {
-        for (int y = 0; y < numParticlesPerAxis; y++)
+        for (int y = 0; y < numParticlesPerAxis; ++y)
         { 
-            for (int z = 0; z < numParticlesPerAxis; z++)
+            for (int z = 0; z < numParticlesPerAxis; ++z)
             {
                 float spacing = 2.0f * state.rad(i);
 
@@ -50,11 +53,11 @@ void ParticleEmitter::emitCube(DynamicalStateData& state, int numParticlesPerAxi
                 // float px = x * spacing + location.X() - (numParticlesPerAxis - 1) * spacing * 0.5f;
                 // float py = y * spacing + location.Y() - (numParticlesPerAxis - 1) * spacing * 0.5f;
                 // float pz = z * spacing + location.Z() - (numParticlesPerAxis - 1) * spacing * 0.5f;
-                state.set_pos(i, Vector(px,py,pz));
-                state.set_vel(i, Vector(randf(),randf(),randf()));
-                state.set_mass(i,1);
+                state.set_pos(i, Vector(px, py, pz));
+                state.set_vel(i, Vector(Randf(), Randf(), Randf()));
+                state.set_mass(i, 1);
                 state.set_ci(i, Color(0,0,1,1));
-                state.set_id(i,i);
+                state.set_id(i, i);
                 i++;
             }
       }
@@ -63,11 +66,8 @@ void ParticleEmitter::emitCube(DynamicalStateData& state, int numParticlesPerAxi
 
 }
 
-void ParticleEmitter::emitCube(SPHStateData& state, int numParticlesPerAxis, const Vector& center)
+void ParticleEmitter::EmitCube(SPHStateData& state, const int numParticlesPerAxis, const Vector& center)
 {
-
-
-
     int numPoints = numParticlesPerAxis * numParticlesPerAxis * numParticlesPerAxis;
     //int numPoints = rate * rate * rate;
     state.Add(numPoints);
@@ -76,11 +76,11 @@ void ParticleEmitter::emitCube(SPHStateData& state, int numParticlesPerAxis, con
 
     //numParticlesPerAxis = rate; 
    
-    for (int x = 0; x < numParticlesPerAxis; x++)
+    for (int x = 0; x < numParticlesPerAxis; ++x)
     {
-        for (int y = 0; y < numParticlesPerAxis; y++)
+        for (int y = 0; y < numParticlesPerAxis; ++y)
         { 
-            for (int z = 0; z < numParticlesPerAxis; z++)
+            for (int z = 0; z < numParticlesPerAxis; ++z)
             {
                 float spacing = 2.0f * state.get_particle_radius();
 
@@ -91,11 +91,11 @@ void ParticleEmitter::emitCube(SPHStateData& state, int numParticlesPerAxis, con
                 // float px = x * spacing + location.X() - (numParticlesPerAxis - 1) * spacing * 0.5f;
                 // float py = y * spacing + location.Y() - (numParticlesPerAxis - 1) * spacing * 0.5f;
                 // float pz = z * spacing + location.Z() - (numParticlesPerAxis - 1) * spacing * 0.5f;
-                state.set_pos(i, Vector(px,py,pz));
-                state.set_vel(i, Vector(0,0,0));
+                state.set_pos(i, Vector(px, py, pz));
+                state.set_vel(i, Vector(0, 0, 0));
                 state.set_mass(i, state.get_float_attr("volume", i) * state.get_density0());
                 state.set_ci(i, Color(0,0,1,1));
-                state.set_id(i,i);
+                state.set_id(i, i);
                 i++;
             }
       }

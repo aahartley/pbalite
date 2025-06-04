@@ -1,3 +1,14 @@
+//*******************************************************************
+//
+//   WCSPHSolver.h
+//
+//  Weakly Incompressible SPH solver
+//
+//
+//
+//*******************************************************************
+
+
 #ifndef ____PBA_WCSPHSOLVER_H____
 #define ____PBA_WCSPHSOLVER_H____
 
@@ -6,19 +17,19 @@
 #include "GISolver.h"
 #include "CollisionHandler.h"
 #include "ExplicitDynamics.h"
-#include <chrono>
 
 
 namespace pba
 {
 
-
+/*!
+  Weakly Inncompressible SPH solver
+ */
 class WCSPHSolver : public GISolverBase
 {
   public:
-    WCSPHSolver(SPHStateData& pq, ForceBase<SPHStateData>& f, GISolverPtr solver)
+    WCSPHSolver(SPHStateData& pq, GISolverPtr solver)
       : pq_(pq),
-        force_(f),
         solver_(std::move(solver)),
         user_dt_(0.001),
         dt_(0.001) {}
@@ -32,7 +43,6 @@ class WCSPHSolver : public GISolverBase
 
   private:
     SPHStateData& pq_;
-    ForceBase<SPHStateData>& force_;
     GISolverPtr solver_;
     float user_dt_;
     float dt_;
@@ -41,12 +51,9 @@ class WCSPHSolver : public GISolverBase
 
 };
 
-GISolverPtr CreateWCSPHSolver(SPHStateData& pq, ForceBase<SPHStateData>& f, GISolverPtr solver);
+GISolverPtr CreateWCSPHSolver(SPHStateData& pq, GISolverPtr solver);
 
 
+} //end of pba namespace
 
-
-
-}
-
-#endif
+#endif //____PBA_WCSPHSOLVER_H____

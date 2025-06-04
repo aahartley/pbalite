@@ -2,7 +2,7 @@
 //
 //   SoftBodyState.h
 //
-//  Bounding Volume Hierarchy for continous collison detection
+//  SoftBodyState attribs with edges
 //
 //
 //
@@ -13,15 +13,13 @@
 
 #include "DynamicalState.h"
 
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <cmath>
 #include <memory>
 
 namespace pba
 {
-
+/*!
+  Connect to particles together
+ */
 class SoftEdge
 {
   public:
@@ -39,10 +37,12 @@ class SoftEdge
     double edge_length_; // Lab
 };
 
+//! TODO: add triangleforces
 
 
-
-
+/*!
+  SoftBody attribs
+ */
 class SoftBodyStateData : public DynamicalStateData
 {
   public:
@@ -63,16 +63,15 @@ class SoftBodyStateData : public DynamicalStateData
   private:
     std::vector<SoftEdge> connected_pairs_;
 };
+
 using SoftBodyStatePtr = std::unique_ptr<SoftBodyStateData>;
+
 inline SoftBodyStatePtr CreateSoftBodyState(const std::string& name="SoftBodyDataNoName")
 {
   return std::make_unique<SoftBodyStateData>(name);
 }
 
 
+} //end of pba namespace
 
-
-
-}
-
-#endif
+#endif //____PBA_SOFT_BODY_STATE_H____

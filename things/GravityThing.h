@@ -11,20 +11,12 @@
 #include "CollisionHandler.h"
 #include "ParticleEmitter.h"
 
-
-
-using namespace std;
-
-namespace pba{
-
-
-
-
+namespace pba
+{
 
 class GravityThing: public PbaThingyDingy
 {
   public:
-
     // Feel free to customize the name of this thing.
     GravityThing(const std::string nam = "Gravity_Thing");
     ~GravityThing();
@@ -32,7 +24,7 @@ class GravityThing: public PbaThingyDingy
     //! Initialization, including GLUT initialization.
     //! Called once at the beginning.  Could be used
     //! to set up things once.
-    void Init( const std::vector<std::string>& args );
+    void Init(const std::vector<std::string>& args);
    
     /////////////////////////////////////////////////////////////// 
     // CASCADING CALLBACK FUNCTIONS 
@@ -48,7 +40,7 @@ class GravityThing: public PbaThingyDingy
 
     //! Implements responses to keyboard events 
     //! This is called when you hit a key
-    void Keyboard( unsigned char key, int x, int y );
+    void Keyboard(unsigned char key, int x, int y);
 
     //! Implements simulator updates during an idle period
     //! This is where the update process is coded
@@ -66,7 +58,6 @@ class GravityThing: public PbaThingyDingy
     void Usage();
     void AddCollisionSurface(pba::CollisionSurface& s);
   private:
-
     // flag for whether to create more particles
     bool emit;
     DynamicalStatePtr state;

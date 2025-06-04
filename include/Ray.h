@@ -1,9 +1,19 @@
+//*******************************************************************
+//
+//   Ray.h
+//
+//   Basic Ray class, logic for segment
+//
+//
+//
+//*******************************************************************
 
 #ifndef ____PBA_RAY_H____
 #define ____PBA_RAY_H____
 
 namespace pba
 {
+
 struct Ray 
 {
   Ray(const Vector& o, const Vector& e, const Vector& d) 
@@ -21,6 +31,9 @@ struct Ray
   Vector direction;
   Vector inv_direction;
   int sign[3];
+
 };
+
 }
+
 #endif

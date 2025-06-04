@@ -52,7 +52,7 @@ SoftBodyThing::SoftBodyThing(const std::string nam)
     force = CreateAccumulatingForce<SoftBodyStateData>();
 
     gravityforce = CreateGravityForce<SoftBodyStateData>(Vector(0,-9.81f,0));
-    struts = CreateAccumulatingStrutForce(1, 1, false); //10, 0.5
+    struts = CreateAccumulatingStrutForce(20, 2, false); //10, 0.5
     //if removing a Force, reset accumulatingforce first
     AccumulatingForce<SoftBodyStateData>* f = dynamic_cast<AccumulatingForce<SoftBodyStateData>*>(force.get()); 
 	f->AddForce(gravityforce.get());
@@ -70,7 +70,7 @@ SoftBodyThing::SoftBodyThing(const std::string nam)
 
 SoftBodyThing::~SoftBodyThing(){}
 
-void SoftBodyThing::Init( const std::vector<std::string>& args ) 
+void SoftBodyThing::Init(const std::vector<std::string>& args) 
 {
     SetSimulationTimestep(0.005);
 }
@@ -89,9 +89,9 @@ void SoftBodyThing::Display()
     // }
     // glEnd();
     glBegin(GL_TRIANGLES);
-    for(size_t j = 0; j < tris.size(); j++)
+    for (size_t j = 0; j < tris.size(); ++j)
     {
-        for( size_t i = 0; i < tris[j].size(); i++ )
+        for (size_t i = 0; i < tris[j].size(); ++i)
         {
             const Vector& v1 = state->pos(tris[j][i].v1);
             const Vector& v2 = state->pos(tris[j][i].v2);
@@ -108,13 +108,13 @@ void SoftBodyThing::Display()
     glEnd();
 }
 
-void SoftBodyThing::Keyboard( unsigned char key, int x, int y )
+void SoftBodyThing::Keyboard(unsigned char key, int x, int y)
 {
     PbaThingyDingy::Keyboard(key,x,y);
-    if( key == 'v' ){ box->toggle_visible(); }
-    if( key == 'w' ){ box->toggle_wireframe(); }
-    if( key == 'e' ){ emit = !emit; }
-    if( key == 'z' )
+    if (key == 'v') { box->toggle_visible(); }
+    if (key == 'w') { box->toggle_wireframe(); }
+    if (key == 'e') { emit = !emit; }
+    if (key == 'z')
     {
         auto* f = dynamic_cast<GravityForce<SoftBodyStateData>*>(gravityforce.get()); 
         Vector wind = f->get_gravity() + Vector(2,0,0);
@@ -122,39 +122,39 @@ void SoftBodyThing::Keyboard( unsigned char key, int x, int y )
         std::cout << "gravity: " << f->get_gravity().X() << f->get_gravity().Y() << std::endl;
 
     }
-    if( key == 'g' )
+    if (key == 'g')
     {
         auto* f = dynamic_cast<GravityForce<SoftBodyStateData>*>(gravityforce.get()); 
         f->set_gravity(f->get_gravity()/1.1);
         std::cout << "gravity: " << f->get_gravity().Y() << std::endl;
     }
-    if( key == 'G' )
+    if (key == 'G')
     { 
         auto* f = dynamic_cast<GravityForce<SoftBodyStateData>*>(gravityforce.get()); 
         f->set_gravity( f->get_gravity()*1.1 );
         std::cout << "gravity: " << f->get_gravity().Y() << std::endl;
     }
-    if( key == 'c' )
+    if (key == 'c')
     {
         box->set_coeff_restitution( box->coeff_restitution()/1.1 );
         std::cout << "coefficient of restituion: " << box->coeff_restitution() << std::endl;
     }
-    if( key == 'C' )
+    if (key == 'C')
     { 
         box->set_coeff_restitution( box->coeff_restitution()*1.1 );
         std::cout << "coefficient of restituion: " << box->coeff_restitution() << std::endl;
     }
-    if( key == 's' )
+    if (key == 's')
     {
         box->set_coeff_sticky( box->coeff_sticky()/1.1 );
         std::cout << "coefficient of sticky: " << box->coeff_sticky() << std::endl;
     }
-    if( key == 'S' )
+    if (key == 'S')
     { 
         box->set_coeff_sticky( box->coeff_sticky()*1.1 );
         std::cout << "coefficient of sticky: " << box->coeff_sticky() << std::endl;
     }
-    if( key == 'l' )
+    if (key == 'l')
     {
         solver.reset();
         a = CreateAdvancePosition(*state, &collisions);
@@ -182,7 +182,7 @@ void SoftBodyThing::Keyboard( unsigned char key, int x, int y )
 
 void SoftBodyThing::solve()
 {
-    if(emit)
+    if (emit)
     {
         //emitter.emitCube(state, 6, Vector(0,0,0));
     }
@@ -212,12 +212,12 @@ void SoftBodyThing::Usage()
 void SoftBodyThing::AddCollisionSurface(CollisionSurface& s)
 {
     std::cout << "Add CollisionSurface\n";
-    if(box == nullptr)
+    if (box == nullptr)
     {
         std::cout << "adding new surface\n";
         box = std::make_unique<CollisionSurface>(s);
     }
-    s.set_coeff_restitution(0.5);
+    s.set_coeff_restitution(1);
     //s->set_coeff_sticky(0.1);
     //if deleting bvh/surf, set collision bvh* to nullptr, same for surface
     collisions.set_collision_surface(box.get());

@@ -1,19 +1,14 @@
-//-------------------------------------------------------
+//*******************************************************************
 //
-//  WCSPHSolver.C
+//   WCSPHSolver.h
 //
-//  Solvers for DFSPH Dynamics
-//
-//  DFSPH functions are based off the 2015 paper: https://animation.rwth-aachen.de/media/papers/2015-SCA-DFSPH.pdf
-//  2017 paper, where the equations are written differently (still equivalent): https://animation.rwth-aachen.de/media/papers/2017-TVCG-ViscousDFSPH.pdf
-//
-//  Copyright (c) 2024 Jerry Tessendorf
+//  Weakly Incompressible SPH solver
 //
 //
-//--------------------------------------------------------
+//
+//*******************************************************************
 
 #include "WCSPHSolver.h"
-#include "ForceLibrary.h"
 
 namespace pba
 {
@@ -80,9 +75,9 @@ void WCSPHSolver::get_timestep()
 
 }
 
-GISolverPtr CreateWCSPHSolver(SPHStateData& pq, ForceBase<SPHStateData>& f, GISolverPtr solver)
+GISolverPtr CreateWCSPHSolver(SPHStateData& pq, GISolverPtr solver)
 {
-  return std::make_unique<WCSPHSolver>(pq, f, std::move(solver));
+  return std::make_unique<WCSPHSolver>(pq, std::move(solver));
 }
 
 }

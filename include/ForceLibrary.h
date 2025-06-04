@@ -134,6 +134,6 @@ ForcePtr<StateType> CreateAccumulatingForce();
 
 ForceSBDPtr CreateAccumulatingStrutForce(double spring, double friction, bool crit_damp);
 
-}
+} //end of pba namesapce
 
-#endif
+#endif //__PBA_FORCE_LIBRARY_H__

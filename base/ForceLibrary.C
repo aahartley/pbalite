@@ -31,14 +31,14 @@ void TaitPressureForce::Compute(SPHStateData& s, const double dt)
     Vector pressure;
     const Vector& pos = s.pos(p);
     std::vector<size_t> neighbors;
-    s.neighbors_list(neighbors, pos, s.get_neighbor_parallel());
+    s.NeighborsList(neighbors, pos, s.get_neighbor_parallel());
     float dens_a = s.get_float_attr("density", p);
-    dens_a = std::fmax(dens_a, s.get_density0());
-    for(size_t a = 0; a < neighbors.size(); ++a)
+    dens_a = std::fmax(dens_a, s.get_density0()); //clamp dens
+    for (size_t a = 0; a < neighbors.size(); ++a)
     {
       size_t pid = neighbors[a]; 
       float dens_b = s.get_float_attr("density", pid);
-      dens_b = std::fmax(dens_b, s.get_density0());
+      dens_b = std::fmax(dens_b, s.get_density0()); //clamp dens
 
       double pa = strength_ * (std::pow(dens_a/rho_0_, gamma_) - 1.0);
       double pb = strength_ * (std::pow(dens_b/rho_0_, gamma_) - 1.0);
@@ -53,7 +53,7 @@ template<typename StateType>
 void HarmonicOscillatorForce<StateType>::Compute(StateType& s, const double dt)
 {
     #pragma omp parallel for
-    for(size_t p = 0; p < s.nb(); ++p)
+    for (size_t p = 0; p < s.nb(); ++p)
     {
         s.set_accel(p, s.accel(p) - kd_ * s.pos(p) / s.mass(p));
     }
@@ -95,7 +95,7 @@ void AccumulatingStrutForce::Compute(SoftBodyStateData& s, const double dt)
     Vector force;
     //both particles same spot
     //d_ij unnomrlaized is full error
-    if (se.get_edge_length() < 0.000001 )
+    if (se.get_edge_length() < 0.000001)
     {
       force = d_ij * spring_;
       force += v_ij * friction_;
@@ -140,27 +140,27 @@ ForceRBDPtr CreateGravityForce(const Vector& g) {
 }
 
 // TaitPressureForce (non-template, already specialized for SPH)
-ForceSPHPtr CreateTaitPressureForce(float strength, float rest_dens, float gamma) {
+ForceSPHPtr CreateTaitPressureForce(const float strength, const float rest_dens, const float gamma) {
     return std::make_unique<TaitPressureForce>(strength, rest_dens, gamma);
 }
 
 // HarmonicOscillatorForce instantiations
 template<>
-ForceDynamicsPtr CreateHarmonicOscillatorForce(double k) {
+ForceDynamicsPtr CreateHarmonicOscillatorForce(const double k) {
     return std::make_unique<HarmonicOscillatorForce<DynamicalStateData>>(k);
 }
 
 template<>
-ForceSPHPtr CreateHarmonicOscillatorForce(double k) {
+ForceSPHPtr CreateHarmonicOscillatorForce(const double k) {
     return std::make_unique<HarmonicOscillatorForce<SPHStateData>>(k);
 }
 
-ForceSBDPtr CreateHarmonicOscillatorForce(double k) {
+ForceSBDPtr CreateHarmonicOscillatorForce(const double k) {
     return std::make_unique<HarmonicOscillatorForce<SoftBodyStateData>>(k);
 }
 
 template<>
-ForceRBDPtr CreateHarmonicOscillatorForce(double k) {
+ForceRBDPtr CreateHarmonicOscillatorForce(const double k) {
     return std::make_unique<HarmonicOscillatorForce<RigidBodyStateData>>(k);
 }
 
@@ -186,7 +186,7 @@ ForceRBDPtr CreateAccumulatingForce() {
 }
 
 // AccumulatingStrutForce (specialized for SoftBody)
-ForceSBDPtr CreateAccumulatingStrutForce(double spring, double friction, bool crit_damp) {
+ForceSBDPtr CreateAccumulatingStrutForce(const double spring, const double friction, const bool crit_damp) {
     return std::make_unique<AccumulatingStrutForce>(spring, friction, crit_damp);
 }
 

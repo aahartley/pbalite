@@ -31,7 +31,7 @@ ElasticCollisionHandler::~ElasticCollisionHandler(){}
 // Check if positions imply a collision has already taken place within the allotted time.
 // If so, backs the position up along the velocity direction to the point of impact, then
 // does an elastic bounce, repat until end of time step
-void ElasticCollisionHandler::HandleCollisions(double dt, DynamicalStateData& pq) 
+void ElasticCollisionHandler::HandleCollisions(const double dt, DynamicalStateData& pq) 
 {
     if (surf_ == nullptr) return;
     #pragma omp parallel for
@@ -47,7 +47,7 @@ void ElasticCollisionHandler::HandleCollisions(double dt, DynamicalStateData& pq
         CollisionData data;
         double running_dt = dt;
         bool keep_checking_for_hits = true;
-        //int count = 0;
+        int count = 0;
         while (keep_checking_for_hits)
         {
             keep_checking_for_hits = false;
@@ -61,8 +61,10 @@ void ElasticCollisionHandler::HandleCollisions(double dt, DynamicalStateData& pq
                     //std::cout << "hit worked\n";
                     keep_checking_for_hits = true;
                     if (data.hit_tri)
+                    {
                         data.tri->Handle(v_0, running_dt, data.x_h, data.hit_time, x_r, 
                                          v_r, surf_->coeff_sticky(), surf_->coeff_restitution());
+                    }
                     x_0 = data.x_h;
                     v_0 = v_r;
                     running_dt = running_dt - data.hit_time;
@@ -75,15 +77,19 @@ void ElasticCollisionHandler::HandleCollisions(double dt, DynamicalStateData& pq
             }
             else
             {
-                if (surf_->Hit( x_0, x_r, v_0, running_dt, data , radius))
+                if (surf_->Hit(x_0, x_r, v_0, running_dt, data , radius))
                 {
                     //std::cout << "hit worked\n";
                     keep_checking_for_hits = true;
                     // Handle collision on plane, with the smallest dtH at hit point XH
                     //std::cout << data.hit_time << '\n';
-                    // if(data.hit_plane)
-                    //     surf->get_plane(data.hit_index).handle( x_0, v_0, running_dt, data.XH, data.hit_time, x_r, v_r, surf->coeff_sticky(), surf->coeff_restitution());
-             
+                    if (data.hit_plane)
+                    {
+                        surf_->get_plane(data.hit_index).Handle(v_0, running_dt, data.x_h, data.hit_time,
+                                                                    x_r, v_r, surf_->coeff_sticky(), surf_->coeff_restitution());
+                        // std::cout << "hit_tri:(handle) " << data.hit_tri << '\n';
+                        // std::cout << "hit_index:(handle) " << data.hit_index << '\n';
+                    }             
                     if (data.hit_tri)
                     {
                         surf_->get_triangle(data.hit_index).Handle(v_0, running_dt, data.x_h, data.hit_time,
@@ -98,10 +104,14 @@ void ElasticCollisionHandler::HandleCollisions(double dt, DynamicalStateData& pq
                     // }
                     x_0 = data.x_h;
                     v_0 = v_r;
-                    //std::cout << "vel: "<<v_0.Y() << '\n';
                     running_dt = running_dt - data.hit_time;
+                    count++;
+                    if (count == 10) 
+                    {
+                        //keep_checking_for_hits = false;
+                        std::cout << "big hits\n";
+                    }
                     //std::cout << "hit " << count << " : "<< running_dt << '\n';
-                    //count++;
                     if ((dt >= 0 && running_dt <= 0) || (dt < 0 && running_dt >= 0))
                     {
                         keep_checking_for_hits = false;

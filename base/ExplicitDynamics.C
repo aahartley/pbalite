@@ -15,8 +15,9 @@
 
 namespace pba
 {
+
 void AdvancePosition::Init(){}
-void AdvancePosition::Solve(double dt)
+void AdvancePosition::Solve(const double dt)
 {
     #pragma omp parallel for
     for (size_t i = 0; i < pq_.nb(); ++i)
@@ -39,7 +40,7 @@ AdvanceVelocity<StateType>::AdvanceVelocity(StateType& pq, ForceBase<StateType>&
     velocity_clamp_(v) {}
 
 template<typename StateType>
-void AdvanceVelocity<StateType>::Solve(double dt)
+void AdvanceVelocity<StateType>::Solve(const double dt)
 {
 
   force_.Compute(pq_, dt); // computes the force and stores (force/mass) in the state vector acceleration member
@@ -65,10 +66,9 @@ void AdvanceVelocity<StateType>::Solve(double dt)
 }
 
 template<typename StateType>
-GISolverPtr pba::CreateAdvanceVelocity(StateType& pq, ForceBase<StateType>& f, float a, float v)
+GISolverPtr pba::CreateAdvanceVelocity(StateType& pq, ForceBase<StateType>& f, const float a, const float v)
 {
   return std::make_unique<AdvanceVelocity<StateType>>(pq, f, a, v);
-
 }
 
 template GISolverPtr CreateAdvanceVelocity<DynamicalStateData>(
@@ -87,4 +87,4 @@ template class AdvanceVelocity<SoftBodyStateData>;
 template class AdvanceVelocity<RigidBodyStateData>;
 
 
-}
+} //end of pba namespace

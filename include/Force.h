@@ -40,8 +40,7 @@ using ForceSPHPtr = std::unique_ptr<ForceBase<SPHStateData>>;
 using ForceSBDPtr = std::unique_ptr<ForceBase<SoftBodyStateData>>;
 using ForceRBDPtr = std::unique_ptr<ForceBase<RigidBodyStateData>>;
 
-}
+} //end of pba namesapce
 
 
-
-#endif
+#endif //__PBA_FORCE_H__

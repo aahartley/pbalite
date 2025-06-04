@@ -1,28 +1,31 @@
 
 
 #include "WCSPHThing.h"
-#include <cstdlib>
+
 #include <GL/gl.h>   // OpenGL itself.
 #include <GL/glu.h>  // GLU support library.
 #include <GL/glut.h> // GLUT support library.
+
 #include <iostream>
+#include <cstdlib>
 
 
 
 namespace pba
 {
 
-WCSPHThing::WCSPHThing(const std::string nam) :
- PbaThingyDingy (nam),
- emit       (false)
+WCSPHThing::WCSPHThing(const std::string nam) 
+  : PbaThingyDingy (nam),
+    emit       (false)
 {
     box = CreateCollisionSurface();
-    float x = 0.3;
-    float y = 0.7;
-    float z = 0.3;
+    float x = 0.2;
+    float y = 0.3;
+    float z = 0.2;
     pba::CreateCube(*box, x, y, z);
     AddCollisionSurface(*box);
-    state = CreateSPH(AABB(Vector(-5,-5,-5), Vector(5,5,5)), 0.1, "SPHState");
+    state = CreateSPH(AABB(Vector(-2,-2,-2), Vector(2,2,2)), 0.1, "SPHState");
+    state->set_use_user_dt(true);
     Reset();
     // int inc = 1;
     // state->add(inc);
@@ -45,7 +48,7 @@ WCSPHThing::WCSPHThing(const std::string nam) :
     force = CreateAccumulatingForce<SPHStateData>();
 
     gravityforce = CreateGravityForce<SPHStateData>(Vector(0,-9.81f,0));
-    pressure_force = CreateTaitPressureForce(50000, 1000, 7);
+    pressure_force = CreateTaitPressureForce(35000, 1000, 7);
     viscosity = CreateExplicitViscosity(0.01);
 
     AccumulatingForce<SPHStateData>* f = dynamic_cast<AccumulatingForce<SPHStateData>*>(force.get()); 
@@ -53,18 +56,19 @@ WCSPHThing::WCSPHThing(const std::string nam) :
     f->AddForce(viscosity.get());
     f->AddForce(pressure_force.get());
     a = CreateAdvancePosition(*state, &collisions);
-    b = CreateAdvanceVelocity(*state, *force, 1.0e9, 1.0e9);
+    b = CreateAdvanceVelocity(*state, *force, 100, 100);
     GISolverPtr b_euler = CreateBackwardEulerSolver(a.get(), b.get());
-    solver = CreateWCSPHSolver(*state, *force, std::move(b_euler));
+    solver = CreateWCSPHSolver(*state, std::move(b_euler));
+    solver = CreateGISolverSubstep(std::move(solver), 2);
     std::cout << name << " constructed\n";
 
 }
 
 WCSPHThing::~WCSPHThing(){}
 
-void WCSPHThing::Init( const std::vector<std::string>& args ) 
+void WCSPHThing::Init(const std::vector<std::string>& args) 
 {
-    SetSimulationTimestep(0.01);
+    SetSimulationTimestep(0.005);
 }
     
 void WCSPHThing::Display() 
@@ -80,7 +84,7 @@ void WCSPHThing::Display()
     //     glVertex3f( P.X(), P.Y(), P.Z() );
     // }
     // glEnd();
-    for( size_t i=0;i<state->nb();i++ )
+    for (size_t i = 0; i < state->nb(); ++i)
     {
        const Color& ci = state->ci(i);
        const pba::Vector& v = state->pos(i);
@@ -92,45 +96,44 @@ void WCSPHThing::Display()
     }
 }
 
-void WCSPHThing::Keyboard( unsigned char key, int x, int y )
+void WCSPHThing::Keyboard(unsigned char key, int x, int y)
 {
     PbaThingyDingy::Keyboard(key,x,y);
-    if( key == 'v' ){ box->toggle_visible(); }
-    if( key == 'w' ){ box->toggle_wireframe(); }
-    if( key == 'e' ){ emit = !emit; }
-    if( key == 'z' )
+    if (key == 'v') { box->toggle_visible(); }
+    if (key == 'w') { box->toggle_wireframe(); }
+    if (key == 'e') { emit = !emit; }
+    if (key == 'z')
     {
         auto* f = dynamic_cast<GravityForce<SPHStateData>*>(gravityforce.get()); 
         Vector wind = f->get_gravity() + Vector(2,0,0);
         f->set_gravity(wind );
     }
-    if( key == 'g' )
+    if (key == 'g')
     {
         auto* f = dynamic_cast<GravityForce<SPHStateData>*>(gravityforce.get()); 
         f->set_gravity(f->get_gravity()/1.1);
-        
     }
-    if( key == 'G' )
+    if (key == 'G')
     { 
         auto* f = dynamic_cast<GravityForce<SPHStateData>*>(gravityforce.get()); 
         f->set_gravity( f->get_gravity()*1.1 );
     }
-    if( key == 'c' )
+    if (key == 'c')
     {
         box->set_coeff_restitution( box->coeff_restitution()/1.1 );
         std::cout << "coefficient of restituion: " << box->coeff_restitution() << std::endl;
     }
-    if( key == 'C' )
+    if (key == 'C')
     { 
         box->set_coeff_restitution( box->coeff_restitution()*1.1 );
         std::cout << "coefficient of restituion: " << box->coeff_restitution() << std::endl;
     }
-    if( key == 's' )
+    if (key == 's')
     {
         box->set_coeff_sticky( box->coeff_sticky()/1.1 );
         std::cout << "coefficient of sticky: " << box->coeff_sticky() << std::endl;
     }
-    if( key == 'S' )
+    if (key == 'S')
     { 
         box->set_coeff_sticky( box->coeff_sticky()*1.1 );
         std::cout << "coefficient of sticky: " << box->coeff_sticky() << std::endl;
@@ -162,13 +165,13 @@ void WCSPHThing::Keyboard( unsigned char key, int x, int y )
 
 void WCSPHThing::solve()
 {
-    if(emit)
+    if (emit)
     {
-        emitter.emitCube(*state, 6, Vector(0,0,0));
+        emitter.EmitCube(*state, 6, Vector(0,0,0));
         emit = false;
     }
     solver->Solve(dt);
-    state->EraseOutsideOfBounds(Vector(-5,-5,-5), Vector(5,5,5));
+    state->EraseOutsideOfBounds(Vector(-1,-1,-1), Vector(1,1,1));
 }
 
 void WCSPHThing::Reset()
@@ -194,7 +197,7 @@ void WCSPHThing::Usage()
 void WCSPHThing::AddCollisionSurface(CollisionSurface& s)
 {
     std::cout << "Add CollisionSurface\n";
-    if(box == nullptr)
+    if (box == nullptr)
     {
         box = std::make_unique<CollisionSurface>(s);
     }
@@ -204,7 +207,7 @@ void WCSPHThing::AddCollisionSurface(CollisionSurface& s)
 }
 
 
-pba::PbaThing CreateWCSPHThing(){ return PbaThing( new WCSPHThing()); }
+pba::PbaThing CreateWCSPHThing() { return PbaThing(new WCSPHThing()); }
 
 
 }

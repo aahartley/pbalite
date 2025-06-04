@@ -67,4 +67,4 @@ inline BVHPtr CreateBVH(const Vector& llc, const Vector& urc, int lvl, int maxlv
 
 }//end of pba namespace
 
-#endif
+#endif // ____PBA_BVH_H____

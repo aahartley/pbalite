@@ -61,4 +61,4 @@ class ElasticCollisionHandler : public CollisionHandlerBase
 
 }//end of pba namespace
 
-#endif
+#endif // __PBA_COLLISIONHANDLER_H__

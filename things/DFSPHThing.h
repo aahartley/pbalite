@@ -14,14 +14,7 @@
 #include "DFSPHSolver.h"
 
 
-
-using namespace std;
-
 namespace pba{
-
-
-
-
 
 class DFSPHThing: public PbaThingyDingy
 {
@@ -34,7 +27,7 @@ class DFSPHThing: public PbaThingyDingy
     //! Initialization, including GLUT initialization.
     //! Called once at the beginning.  Could be used
     //! to set up things once.
-    void Init( const std::vector<std::string>& args );
+    void Init(const std::vector<std::string>& args);
    
     /////////////////////////////////////////////////////////////// 
     // CASCADING CALLBACK FUNCTIONS 
@@ -50,7 +43,7 @@ class DFSPHThing: public PbaThingyDingy
 
     //! Implements responses to keyboard events 
     //! This is called when you hit a key
-    void Keyboard( unsigned char key, int x, int y );
+    void Keyboard(unsigned char key, int x, int y);
 
     //! Implements simulator updates during an idle period
     //! This is where the update process is coded
@@ -67,8 +60,8 @@ class DFSPHThing: public PbaThingyDingy
     //! here as to what the keyboard option is.
     void Usage();
     void AddCollisionSurface(pba::CollisionSurface& s);
-  private:
 
+  private:
     // flag for whether to create more particles
     bool emit;
     SPHStatePtr state;

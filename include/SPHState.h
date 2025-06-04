@@ -30,7 +30,7 @@ class SPHStateData : public DynamicalStateData, public NeighborSearch
     ~SPHStateData();
 
     float Weight(size_t p, const Vector& P) const;
-    const Vector GradWeight(size_t p, const Vector& P) const;
+    Vector GradWeight(size_t p, const Vector& P) const;
 
     void ComputeDensity();
     void ComputePredictedDensity(size_t p, double dt);
@@ -91,6 +91,6 @@ inline SPHStatePtr CreateSPH(const AABB& bounds, double h, const std::string& na
 }
 
 
-}
+} //end of pba namespace
 
-#endif
+#endif //____PBA_SPHSTATE_H____

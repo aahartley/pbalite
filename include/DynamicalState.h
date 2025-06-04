@@ -129,10 +129,8 @@ class DynamicalStateData
     void re_find_main_attrs();
     void set_stage(const IntegrationStage& s) { stage_ = s; }
     const IntegrationStage& get_stage() { return stage_; }
-
+    //! erase particles outside of aabb and return the number
     int EraseOutsideOfBounds(const Vector& llc, const Vector& urc);
-
-
 
   protected:
     std::string name_;
@@ -158,6 +156,6 @@ using DynamicalStatePtr = std::unique_ptr<pba::DynamicalStateData>;
 DynamicalStatePtr CreateDynamicalState(const std::string& name = "DynamicalDataNoName");
 AABB BoundingBox(const DynamicalStateData& d);
 
-}
+} //end of pba namespace
 
-#endif
+#endif //__PBA_DYNAMICALSTATE_H__

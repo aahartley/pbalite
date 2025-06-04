@@ -11,12 +11,12 @@ namespace pba
 
 void CreateInfiniteCube(CollisionSurface& s, double x, double y, double z)
 {
-    CollisionInfinitePlane bottom(Vector(0,1,0),Vector(0,-y,0));
-    CollisionInfinitePlane top(Vector(0,-1,0),Vector(0,y,0));
-    CollisionInfinitePlane right(Vector(-1,0,0),Vector(x,0,0));
-    CollisionInfinitePlane left(Vector(1,0,0),Vector(-x,0,0));
-    CollisionInfinitePlane front(Vector(0,0,-1),Vector(0,0,z)); //closest to screen
-    CollisionInfinitePlane back(Vector(0,0,1),Vector(0,0,-z)); //(z points to screen)
+    CollisionInfinitePlane bottom(Vector(0,1,0), Vector(0,-y,0));
+    CollisionInfinitePlane top(Vector(0,-1,0), Vector(0,y,0));
+    CollisionInfinitePlane right(Vector(-1,0,0), Vector(x,0,0));
+    CollisionInfinitePlane left(Vector(1,0,0), Vector(-x,0,0));
+    CollisionInfinitePlane front(Vector(0,0,-1), Vector(0,0,z)); //closest to screen
+    CollisionInfinitePlane back(Vector(0,0,1), Vector(0,0,-z)); //(z points to screen)
     s.AddPlane(bottom);
     s.AddPlane(top);
     s.AddPlane(right);
@@ -72,36 +72,33 @@ void CreateCube(CollisionSurface& s, double x, double y, double z)
     std::cout << "r2: " << r2.normal().X() << ", " << r2.normal().Y() << ", " << r2.normal().Z() << "\n";
     s.AddTriangle(r2);
 
-    //  Front -Z)
-    pba::CollisionTriangle f1(p010, p110, p100);
-    std::cout << "f1: " << f1.normal().X() << ", " << f1.normal().Y() << ", " << f1.normal().Z() << "\n";
+    //  back (+Z)
+    pba::CollisionTriangle f1(p100, p110, p010);
+    std::cout << "ba1: " << f1.normal().X() << ", " << f1.normal().Y() << ", " << f1.normal().Z() << "\n";
     s.AddTriangle(f1);
 
-    pba::CollisionTriangle f2(p010, p100, p000);
-    std::cout << "f2: " << f2.normal().X() << ", " << f2.normal().Y() << ", " << f2.normal().Z() << "\n";
+    pba::CollisionTriangle f2(p000, p100, p010);
+    std::cout << "ba2: " << f2.normal().X() << ", " << f2.normal().Y() << ", " << f2.normal().Z() << "\n";
     s.AddTriangle(f2);
 
-    // Back +Z) 
-    pba::CollisionTriangle ba1(p011, p101, p111);
-    std::cout << "ba1: " << ba1.normal().X() << ", " << ba1.normal().Y() << ", " << ba1.normal().Z() << "\n";
+    // front (-Z) 
+    pba::CollisionTriangle ba1(p111, p101, p011);
+    std::cout << "f1: " << ba1.normal().X() << ", " << ba1.normal().Y() << ", " << ba1.normal().Z() << "\n";
     s.AddTriangle(ba1);
 
-    pba::CollisionTriangle ba2(p011, p001, p101);
-    std::cout << "ba2: " << ba2.normal().X() << ", " << ba2.normal().Y() << ", " << ba2.normal().Z() << "\n";
+    pba::CollisionTriangle ba2(p101, p001, p011);
+    std::cout << "f2: " << ba2.normal().X() << ", " << ba2.normal().Y() << ", " << ba2.normal().Z() << "\n";
     s.AddTriangle(ba2);
-
 
 }
 
-
-
 void DisplayInfinitePlanes(CollisionSurface* s)
 {
-    if(!s->is_visible()) { return; }
+    if (!s->is_visible()) { return; }
     float scale = 0.004;
     float dims = 1024*scale;
     Vector v1(1,0,0);
-    for(size_t p =0; p < s->plane_size(); p++)
+    for (size_t p =0; p < s->plane_size(); ++p)
     {
         CollisionInfinitePlane plane = s->get_plane(p);
         Vector normal = plane.getNormal();
@@ -132,8 +129,8 @@ void DisplayInfinitePlanes(CollisionSurface* s)
 
 void Display(CollisionSurface* s)
 {
-    if(!s->is_visible()) { return; }
-    for(size_t p =0; p < s->triangle_size(); p++)
+    if (!s->is_visible() || s->triangle_size() == 0) { return; }
+    for (size_t p =0; p < s->triangle_size(); ++p)
     {
         const CollisionTriangle& tri = s->get_triangle(p);
         //const Vector& normal = tri.normal();
@@ -157,20 +154,20 @@ void GeoToSoftBody(std::vector<Vector>& verts, std::vector<Triangle>& tris, cons
     s.set_num_pairs((verts.size()*(verts.size()-1))/2);
     std::cout << "uniq edges "<<(verts.size()*(verts.size()-1))/2 << '\n';
     #pragma omp parallel for
-    for(size_t i = 0; i < verts.size(); i++)
+    for (size_t i = 0; i < verts.size(); ++i)
     {
         s.set_id(i, i);
         s.set_pos(i,Vector(verts[i].X(), verts[i].Y(), verts[i].Z()));
         s.set_mass(i,1);
-        s.set_vel(i, Vector(0,0,0));
+        s.set_vel(i, Vector(0,0,2));
         s.set_ci(i, Color(0,0,1,1));;
     }
     #pragma omp parallel for schedule(dynamic)
-    for(size_t i = 0; i < verts.size(); i++)
+    for (size_t i = 0; i < verts.size(); ++i)
     {
         size_t start_count = (i * (2 * verts.size() - i - 1)) / 2;
 
-        for(size_t j = i+1; j < verts.size(); j++)
+        for (size_t j = i+1; j < verts.size(); ++j)
         {
             size_t count = start_count + (j - i - 1);
             s.AddPair(i, j, count);

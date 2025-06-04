@@ -1,61 +1,63 @@
+//*******************************************************************
+//
+//   NeighborSearch.h
+//
+//   Library of forces for different states.
+//
+//
+//
+//*******************************************************************
 
 #ifndef ____PBA_NEIGHBORSEARCH_H____
 #define ____PBA_NEIGHBORSEARCH_H____
 
-#include <vector>
-
 #include "AABB.h"
 #include "DynamicalState.h"
 
+#include <vector>
+
 namespace pba
 {
-
+/*!
+  Neighorhood search in a given radius for SPH, return adjacent cells based on kernel radius
+ */
 class NeighborSearch
 {
   public:
     NeighborSearch();
-    NeighborSearch(const AABB& b, float r);
+    //! bounds of grid, SPH kernel radius
+    NeighborSearch(const AABB& b, float radius);
     ~NeighborSearch();
-
+    //! populate grid with particles
     void Populate(const DynamicalStateData& state);
-    void clear_grid();
+    void ClearGrid();
 
-    size_t index( const Vector& P ) const;
-    size_t index( size_t i, size_t j, size_t k ) const;
-    void anti_index( const size_t ind, size_t& i, size_t& j, size_t& k ) const;
-
-
-    void neighbors_list(std::vector<size_t>& neighbors, const Vector& pos, const bool use_parallel);
-
-
-    void in_bounds(const Vector& pos, size_t i);
-    void compute_size();
-    void set_cellsize(const float r);
+    size_t Index(const Vector& P) const;
+    size_t Index(size_t i, size_t j, size_t k) const;
+    void AntiIndex(size_t ind, size_t& i, size_t& j, size_t& k) const;
+    //! populate neighbors vector 
+    void NeighborsList(std::vector<size_t>& neighbors, const Vector& pos, bool use_parallel);
+    //! check if particle is inside grid
+    void InBounds(const Vector& pos, size_t i);
+    //! size the grid based on dims
+    void ComputeSize();
+    void set_cellsize(float r);
     void set_bounds(const AABB& b);
 
-
-
   private:
-    AABB bounds;
-    float radius;
-    std::vector< std::vector<size_t> > grid;
-    float cell_size;
-    size_t size;
-    Vector L;
-    size_t nx;
-    size_t ny;
-    size_t nz;
-
-
+    AABB bounds_;
+    float radius_;
+    std::vector< std::vector<size_t> > grid_;
+    float cell_size_;
+    size_t size_;
+    Vector L_;
+    size_t nx_;
+    size_t ny_;
+    size_t nz_;
 
 };
 
 
+} //end of pba namespace
 
-
-
-}
-
-
-
-#endif
+#endif //____PBA_NEIGHBORSEARCH_H____

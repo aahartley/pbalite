@@ -1,25 +1,20 @@
 
 
 #include "DFSPHThing.h"
-#include <cstdlib>
+
 #include <GL/gl.h>   // OpenGL itself.
 #include <GL/glu.h>  // GLU support library.
 #include <GL/glut.h> // GLUT support library.
+
 #include <iostream>
+#include <cstdlib>
 
+namespace pba
+{
 
-
-using namespace std;
-
-using namespace pba;
-
-
-
-
-
-DFSPHThing::DFSPHThing(const std::string nam) :
- PbaThingyDingy (nam),
- emit       (false)
+DFSPHThing::DFSPHThing(const std::string nam) 
+  : PbaThingyDingy(nam),
+    emit(false)
 {
     box = CreateCollisionSurface();
     float x = 0.3;
@@ -72,7 +67,7 @@ void DFSPHThing::Init( const std::vector<std::string>& args )
     
 void DFSPHThing::Display() 
 {
-    pba::DisplayInfinitePlanes(box.get());
+    pba::Display(box.get());
     // glPointSize(5.0);
     // glBegin(GL_POINTS);
     // for( size_t i=0;i<state->nb();i++ )
@@ -83,12 +78,12 @@ void DFSPHThing::Display()
     //     glVertex3f( P.X(), P.Y(), P.Z() );
     // }
     // glEnd();
-    for( size_t i=0;i<state->nb();i++ )
+    for (size_t i = 0; i < state->nb(); ++i)
     {
        const Color& ci = state->ci(i);
        const pba::Vector& v = state->pos(i);
        glPushMatrix();
-       glColor3f( ci.red(), ci.green(), ci.blue() );
+       glColor3f(ci.red(), ci.green(), ci.blue());
        glTranslatef(v.X(), v.Y(),v.Z());
        glutSolidSphere(0.025, 30,30);
        glPopMatrix();
@@ -98,42 +93,42 @@ void DFSPHThing::Display()
 void DFSPHThing::Keyboard( unsigned char key, int x, int y )
 {
     PbaThingyDingy::Keyboard(key,x,y);
-    if( key == 'v' ){ box->toggle_visible(); }
-    if( key == 'w' ){ box->toggle_wireframe(); }
-    if( key == 'e' ){ emit = !emit; }
-    if( key == 'z' )
+    if (key == 'v') { box->toggle_visible(); }
+    if (key == 'w') { box->toggle_wireframe(); }
+    if (key == 'e') { emit = !emit; }
+    if (key == 'z')
     {
         auto* f = dynamic_cast<GravityForce<SPHStateData>*>(gravityforce.get()); 
         Vector wind = f->get_gravity() + Vector(2,0,0);
         f->set_gravity(wind );
     }
-    if( key == 'g' )
+    if (key == 'g')
     {
         auto* f = dynamic_cast<GravityForce<SPHStateData>*>(gravityforce.get()); 
         f->set_gravity(f->get_gravity()/1.1);
         
     }
-    if( key == 'G' )
+    if(key == 'G')
     { 
         auto* f = dynamic_cast<GravityForce<SPHStateData>*>(gravityforce.get()); 
         f->set_gravity( f->get_gravity()*1.1 );
     }
-    if( key == 'c' )
+    if (key == 'c')
     {
         box->set_coeff_restitution( box->coeff_restitution()/1.1 );
         std::cout << "coefficient of restituion: " << box->coeff_restitution() << std::endl;
     }
-    if( key == 'C' )
+    if (key == 'C')
     { 
         box->set_coeff_restitution( box->coeff_restitution()*1.1 );
         std::cout << "coefficient of restituion: " << box->coeff_restitution() << std::endl;
     }
-    if( key == 's' )
+    if (key == 's')
     {
         box->set_coeff_sticky( box->coeff_sticky()/1.1 );
         std::cout << "coefficient of sticky: " << box->coeff_sticky() << std::endl;
     }
-    if( key == 'S' )
+    if  (key == 'S')
     { 
         box->set_coeff_sticky( box->coeff_sticky()*1.1 );
         std::cout << "coefficient of sticky: " << box->coeff_sticky() << std::endl;
@@ -165,9 +160,9 @@ void DFSPHThing::Keyboard( unsigned char key, int x, int y )
 
 void DFSPHThing::solve()
 {
-    if(emit)
+    if (emit)
     {
-        emitter.emitCube(*state, 6, Vector(0,0,0));
+        emitter.EmitCube(*state, 6, Vector(0,0,0));
         emit = false;
     }
     solver->Solve(dt);
@@ -207,6 +202,7 @@ void DFSPHThing::AddCollisionSurface(CollisionSurface& s)
 }
 
 
-pba::PbaThing pba::CreateDFSPHThing(){ return PbaThing( new DFSPHThing()); }
+pba::PbaThing CreateDFSPHThing() { return PbaThing(new DFSPHThing()); }
 
 
+}

@@ -2,7 +2,7 @@
 //
 //   GISolver.h
 //
-//  Bounding Volume Hierarchy for continous collison detection
+//  Full solvers euler to higher oder
 //
 //
 //
@@ -200,7 +200,7 @@ inline GISolverPtr CreateGISolverSixthOrder(GISolverPtr s)
   return std::make_unique<GISolverSixthOrder>(std::move(s));
 }
 
-}
+} //end of pba namespace
 
 
-#endif
+#endif //__PBA_GISOLVER_H__
