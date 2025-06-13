@@ -49,11 +49,11 @@ void ExplicitViscosity::Compute(SPHStateData& s, const double dt)
         laplacian = (2*(dimensions+2) * laplacian);
         viscosity_force = (mass * kinematic_viscosity) * laplacian;
         s.set_accel(p, s.accel(p) + (viscosity_force) / s.mass(p)); // / by mass?
-        #pragma omp critical
-        {
-            if (std::isnan(s.accel(p).X()) || std::isnan(s.accel(p).Y()) || std::isnan(s.accel(p).Z())) 
-                std::cout <<"force bad vel nan\n";
-        }
+        // #pragma omp critical
+        // {
+        //     if (std::isnan(s.accel(p).X()) || std::isnan(s.accel(p).Y()) || std::isnan(s.accel(p).Z())) 
+        //         std::cout <<"force bad vel nan\n";
+        // }
 
     } 
 }

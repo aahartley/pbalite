@@ -69,19 +69,19 @@ void DynamicalStateData::create_attr(const std::string& name, const Color& def)
 size_t DynamicalStateData::Add()
 {
    size_t add_size = nb_items_ + 1;
-   for (std::map<std::string,DSAttribute<int>>::iterator a = int_attributes_.begin(); a != int_attributes_.end(); ++a)
+   for (std::unordered_map<std::string,DSAttribute<int>>::iterator a = int_attributes_.begin(); a != int_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
-   for (std::map<std::string,DSAttribute<float>>::iterator a = float_attributes_.begin(); a != float_attributes_.end(); ++a)
+   for (std::unordered_map<std::string,DSAttribute<float>>::iterator a = float_attributes_.begin(); a != float_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
-   for (std::map<std::string,DSAttribute<Vector>>::iterator a = vector_attributes_.begin(); a != vector_attributes_.end(); ++a)
+   for (std::unordered_map<std::string,DSAttribute<Vector>>::iterator a = vector_attributes_.begin(); a != vector_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
-   for (std::map<std::string,DSAttribute<Color>>::iterator a = color_attributes_.begin(); a != color_attributes_.end(); ++a)
+   for (std::unordered_map<std::string,DSAttribute<Color>>::iterator a = color_attributes_.begin(); a != color_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
@@ -94,19 +94,19 @@ size_t DynamicalStateData::Add()
 size_t DynamicalStateData::Add(const size_t nb)
 {
    size_t add_size = nb_items_ + nb;
-   for (std::map<std::string,DSAttribute<int>>::iterator a = int_attributes_.begin(); a != int_attributes_.end(); ++a)
+   for (std::unordered_map<std::string,DSAttribute<int>>::iterator a = int_attributes_.begin(); a != int_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
-   for (std::map<std::string,DSAttribute<float>>::iterator a = float_attributes_.begin(); a != float_attributes_.end(); ++a)
+   for (std::unordered_map<std::string,DSAttribute<float>>::iterator a = float_attributes_.begin(); a != float_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
-   for (std::map<std::string,DSAttribute<Vector>>::iterator a = vector_attributes_.begin(); a != vector_attributes_.end(); ++a)
+   for (std::unordered_map<std::string,DSAttribute<Vector>>::iterator a = vector_attributes_.begin(); a != vector_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
-   for (std::map<std::string,DSAttribute<Color>>::iterator a = color_attributes_.begin(); a != color_attributes_.end(); ++a)
+   for (std::unordered_map<std::string,DSAttribute<Color>>::iterator a = color_attributes_.begin(); a != color_attributes_.end(); ++a)
    {
       a->second.expand_to(add_size);
    }
@@ -118,19 +118,19 @@ size_t DynamicalStateData::Add(const size_t nb)
 
 void DynamicalStateData::Clear()
 {
-   for (std::map<std::string, DSAttribute<int>>::iterator a = int_attributes_.begin(); a != int_attributes_.end(); ++a)
+   for (std::unordered_map<std::string, DSAttribute<int>>::iterator a = int_attributes_.begin(); a != int_attributes_.end(); ++a)
    {
       a->second.clear();
    }
-   for (std::map<std::string, DSAttribute<float>>::iterator a = float_attributes_.begin(); a != float_attributes_.end(); ++a)
+   for (std::unordered_map<std::string, DSAttribute<float>>::iterator a = float_attributes_.begin(); a != float_attributes_.end(); ++a)
    {
       a->second.clear();
    }
-   for (std::map<std::string, DSAttribute<Vector>>::iterator a = vector_attributes_.begin(); a != vector_attributes_.end(); ++a)
+   for (std::unordered_map<std::string, DSAttribute<Vector>>::iterator a = vector_attributes_.begin(); a != vector_attributes_.end(); ++a)
    {
       a->second.clear();
    }
-   for (std::map<std::string, DSAttribute<Color>>::iterator a = color_attributes_.begin(); a != color_attributes_.end(); ++a)
+   for (std::unordered_map<std::string, DSAttribute<Color>>::iterator a = color_attributes_.begin(); a != color_attributes_.end(); ++a)
    {
       a->second.clear();
    }
@@ -141,25 +141,25 @@ void DynamicalStateData::Clear()
 
 int DynamicalStateData::get_int_attr(const std::string& name, const size_t p) const
 {
-   std::map<std::string,DSAttribute<int>>::const_iterator a = int_attributes_.find(name);
+   std::unordered_map<std::string,DSAttribute<int>>::const_iterator a = int_attributes_.find(name);
    return a->second.get(p);
 }
 
 float DynamicalStateData::get_float_attr(const std::string& name, const size_t p) const
 {
-   std::map<std::string,DSAttribute<float>>::const_iterator a = float_attributes_.find(name);
+   std::unordered_map<std::string,DSAttribute<float>>::const_iterator a = float_attributes_.find(name);
    return a->second.get(p);
 }
 
 const Vector& DynamicalStateData::get_vector_attr(const std::string& name, const size_t p) const
 {
-   std::map<std::string,DSAttribute<Vector>>::const_iterator a = vector_attributes_.find(name);
+   std::unordered_map<std::string,DSAttribute<Vector>>::const_iterator a = vector_attributes_.find(name);
    return a->second.get(p);
 }
 
 const Color& DynamicalStateData::get_color_attr(const std::string& name, const size_t p) const
 {
-   std::map<std::string,DSAttribute<Color>>::const_iterator a = color_attributes_.find(name);
+   std::unordered_map<std::string,DSAttribute<Color>>::const_iterator a = color_attributes_.find(name);
    return a->second.get(p);
 }
 
@@ -310,19 +310,19 @@ int DynamicalStateData::EraseOutsideOfBounds(const Vector& llc, const Vector& ur
       }
       else
       {
-         for (std::map< std::string, DSAttribute<int> >::iterator a = int_attributes_.begin(); a != int_attributes_.end(); a++)
+         for (std::unordered_map< std::string, DSAttribute<int> >::iterator a = int_attributes_.begin(); a != int_attributes_.end(); a++)
          {
             a->second.erase(p);
          }
-         for (std::map< std::string, DSAttribute<float> >::iterator a = float_attributes_.begin(); a != float_attributes_.end(); a++)
+         for (std::unordered_map< std::string, DSAttribute<float> >::iterator a = float_attributes_.begin(); a != float_attributes_.end(); a++)
          {
             a->second.erase(p);
          }
-         for (std::map< std::string, DSAttribute<Vector> >::iterator a = vector_attributes_.begin(); a != vector_attributes_.end(); a++)
+         for (std::unordered_map< std::string, DSAttribute<Vector> >::iterator a = vector_attributes_.begin(); a != vector_attributes_.end(); a++)
          {
             a->second.erase(p);
          }
-         for (std::map< std::string, DSAttribute<Color> >::iterator a = color_attributes_.begin(); a != color_attributes_.end(); a++)
+         for (std::unordered_map< std::string, DSAttribute<Color> >::iterator a = color_attributes_.begin(); a != color_attributes_.end(); a++)
          {
             a->second.erase(p);
          }

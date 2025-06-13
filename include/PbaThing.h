@@ -90,6 +90,7 @@ class PbaThingyDingy
 
     bool visible;
     double dt;
+    size_t frame;
     const std::string name;
 
   private: 

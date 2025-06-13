@@ -19,8 +19,6 @@ AABB::AABB(const Vector& llc, const Vector& urc)
   : llc_(llc),
     urc_(urc) {}
 
-AABB::~AABB(){}
-
 bool AABB::IsInside(const Vector& P) const
 {
     for (int i = 0; i < 3; ++i)

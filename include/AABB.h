@@ -26,7 +26,7 @@ class AABB
     //! Note that Vector class inits to (0,0,0)
     AABB();
     AABB(const Vector& LLC, const Vector& URC);
-    ~AABB();
+    ~AABB() = default;
 
     //! Test whether the input AABB intersects this AABB
     bool Intersects(const AABB& aabb) const;

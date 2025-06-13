@@ -8,19 +8,24 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <chrono>
 
 namespace pba
 {
 
 DFSPHThing::DFSPHThing(const std::string nam) 
   : PbaThingyDingy(nam),
-    emit(false)
+    emit(false),
+    solve_time_(0)
 {
     box = CreateCollisionSurface();
     float x = 0.3;
     float y = 0.7;
     float z = 0.3;
     pba::CreateCube(*box, x, y, z);
+    bvh = CreateBVH(Vector(-5,-5,-5), Vector(5,5,5), 0, 20, 1);
+    bvh->AddObject(*box);
+    bvh->Divide();
     AddCollisionSurface(*box);
     state = CreateSPH(AABB(Vector(-5,-5,-5), Vector(5,5,5)), 0.1, "DFSPHState");
     Reset();
@@ -67,27 +72,27 @@ void DFSPHThing::Init( const std::vector<std::string>& args )
     
 void DFSPHThing::Display() 
 {
-    pba::Display(box.get());
-    // glPointSize(5.0);
-    // glBegin(GL_POINTS);
-    // for( size_t i=0;i<state->nb();i++ )
-    // {
-    //     const Vector& P = state->pos(i);
-    //     const Color& ci = state->ci(i);
-    //     glColor3f( ci.red(), ci.green(), ci.blue() );
-    //     glVertex3f( P.X(), P.Y(), P.Z() );
-    // }
-    // glEnd();
-    for (size_t i = 0; i < state->nb(); ++i)
-    {
-       const Color& ci = state->ci(i);
-       const pba::Vector& v = state->pos(i);
-       glPushMatrix();
-       glColor3f(ci.red(), ci.green(), ci.blue());
-       glTranslatef(v.X(), v.Y(),v.Z());
-       glutSolidSphere(0.025, 30,30);
-       glPopMatrix();
-    }
+//     pba::Display(box.get());
+//     // glPointSize(5.0);
+//     // glBegin(GL_POINTS);
+//     // for( size_t i=0;i<state->nb();i++ )
+//     // {
+//     //     const Vector& P = state->pos(i);
+//     //     const Color& ci = state->ci(i);
+//     //     glColor3f( ci.red(), ci.green(), ci.blue() );
+//     //     glVertex3f( P.X(), P.Y(), P.Z() );
+//     // }
+//     // glEnd();
+//     for (size_t i = 0; i < state->nb(); ++i)
+//     {
+//        const Color& ci = state->ci(i);
+//        const pba::Vector& v = state->pos(i);
+//        glPushMatrix();
+//        glColor3f(ci.red(), ci.green(), ci.blue());
+//        glTranslatef(v.X(), v.Y(),v.Z());
+//        glutSolidSphere(0.025, 30,30);
+//        glPopMatrix();
+//     }
 }
 
 void DFSPHThing::Keyboard( unsigned char key, int x, int y )
@@ -160,6 +165,7 @@ void DFSPHThing::Keyboard( unsigned char key, int x, int y )
 
 void DFSPHThing::solve()
 {
+    auto start = std::chrono::high_resolution_clock::now();
     if (emit)
     {
         emitter.EmitCube(*state, 6, Vector(0,0,0));
@@ -167,6 +173,15 @@ void DFSPHThing::solve()
     }
     solver->Solve(dt);
     state->EraseOutsideOfBounds(Vector(-5,-5,-5), Vector(5,5,5));
+    ++frame;
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    solve_time_ += static_cast<double>(duration.count());
+    if (frame % 24 == 0)
+    {
+        std::cout << "Avg solve time: " << solve_time_/24 << " ms" << std::endl;
+        solve_time_ = 0;
+    }
 }
 
 void DFSPHThing::Reset()
@@ -199,6 +214,7 @@ void DFSPHThing::AddCollisionSurface(CollisionSurface& s)
     s.set_coeff_restitution(0.5);
     //s->set_coeff_sticky(0.1);
     collisions.set_collision_surface(box.get());
+    collisions.set_bvh(bvh.get());
 }
 
 

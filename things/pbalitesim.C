@@ -1,4 +1,3 @@
-
 #include "PbaViewer.h"
 #include "ScreenCapturePPM.h"
 #include "MyThing.h"
@@ -7,6 +6,8 @@
 #include "DFSPHThing.h"
 #include "SoftBodyThing.h"
 #include "RigidBodyThing.h"
+
+#include <omp.h>
 
 
 int main(int argc, char** argv)
@@ -17,7 +18,8 @@ int main(int argc, char** argv)
    {
       args.push_back(argv[i]);
    }
-
+   const int num_threads = omp_get_num_procs();
+   omp_set_num_threads(num_threads); 
    // Instantiate a viewer
    pba::PbaViewer* viewer = pba::CreateViewer();
 
@@ -25,8 +27,8 @@ int main(int argc, char** argv)
    //pba::PbaThing mything = pba::CreateMyThing();
    //pba::PbaThing mything = pba::CreateGravityThing();
    //pba::PbaThing mything = pba::CreateWCSPHThing();
-   //pba::PbaThing mything = pba::CreateDFSPHThing();
-   pba::PbaThing mything = pba::CreateSoftBodyThing();
+   pba::PbaThing mything = pba::CreateDFSPHThing();
+   //pba::PbaThing mything = pba::CreateSoftBodyThing();
    //pba::PbaThing mything = pba::CreateRigidBodyThing();
 
    viewer->AddThing(mything);

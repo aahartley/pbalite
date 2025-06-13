@@ -92,6 +92,8 @@ void DFSPHSolver::fakecs()
 
 void DFSPHSolver::Solve(const double userdt)
 {
+   //auto start = std::chrono::high_resolution_clock::now();
+
    user_dt_ = userdt;
 
    //Occupancy Grid
@@ -125,14 +127,12 @@ void DFSPHSolver::Solve(const double userdt)
    //Boundary Handling
    //fakecs();
 
-   //auto start2 = std::chrono::high_resolution_clock::now();
-
-   // auto end2 = std::chrono::high_resolution_clock::now();
-   // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end2 - start2);
-   // std::cout << "Time taken by function: " << duration.count() << " ms" << std::endl;
-
    coll_handler_->HandleCollisions(dt_, pq_);
    //std::cout << "collissions good\n";
+
+   // auto end = std::chrono::high_resolution_clock::now();
+   // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+   // std::cout << "Time taken by function: " << duration.count() << " ms" << std::endl;
 
 }
 
@@ -173,7 +173,7 @@ void DFSPHSolver::correct_density_error()
       iter++;
    }  
 
-   std::cout << "DE dens error: " <<average_density_error << "iter: " << iter << '\n';
+   //std::cout << "DE dens error: " <<average_density_error << "iter: " << iter << '\n';
 
    #pragma omp parallel for
    for (size_t p = 0; p < pq_.nb(); ++p)
@@ -198,37 +198,39 @@ void DFSPHSolver::correct_density_error()
 void DFSPHSolver::density_solve_iteration(float& average_density_error)
 {
    float density_error = 0.0f;
-
-   #pragma omp parallel for
-   for (size_t p = 0; p < pq_.nb(); ++p)
+   #pragma omp parallel default(shared)
    {
-      compute_pressure_acc(p, "density"); 
-   }   
-   #pragma omp  parallel for reduction(+:density_error)
-   for (size_t p = 0; p < pq_.nb(); ++p)
-   {
-      float error_force = compute_error_force(p, "density");
+      #pragma omp for
+      for (size_t p = 0; p < pq_.nb(); ++p)
+      {
+         compute_pressure_acc(p, "density"); 
+      }   
+      #pragma omp  for reduction(+:density_error)
+      for (size_t p = 0; p < pq_.nb(); ++p)
+      {
+         float error_force = compute_error_force(p, "density");
+      
+         //const float predicted_density = pq_.get_float_attr("predicted_density", p);
    
-      //const float predicted_density = pq_.get_float_attr("predicted_density", p);
- 
-      const float s_i =  pq_.get_float_attr("predicted_density", p) - pq_.get_density0(); 
+         const float s_i =  pq_.get_float_attr("predicted_density", p) - pq_.get_density0(); 
 
-      float k_i = pq_.get_float_attr("k_i", p);
-  
-      //Equation (9)
-      //(ρ∗i - ρ0) = 1/∆t^2  ∑_j m_j( f_Pi / m_i - f_Pj / m_i)∇Wij (in my derivations it should be -(1/∆t^2), typo in paper?)
-      //(ρ∗i - ρ0) = -1/∆t^2  ∑_j m_j( f_Pi / m_i - f_Pj / m_i)∇Wij
-      //(ρ∗i - ρ0) + 1/∆t^2  ∑_j m_j( f_Pi / m_i - f_Pj / m_i)∇Wij = error
-      const float residuum = std::max(s_i + error_force, 0.0f); 
+         float k_i = pq_.get_float_attr("k_i", p);
+   
+         //Equation (9)
+         //(ρ∗i - ρ0) = 1/∆t^2  ∑_j m_j( f_Pi / m_i - f_Pj / m_i)∇Wij (in my derivations it should be -(1/∆t^2), typo in paper?)
+         //(ρ∗i - ρ0) = -1/∆t^2  ∑_j m_j( f_Pi / m_i - f_Pj / m_i)∇Wij
+         //(ρ∗i - ρ0) + 1/∆t^2  ∑_j m_j( f_Pi / m_i - f_Pj / m_i)∇Wij = error
+         const float residuum = std::max(s_i + error_force, 0.0f); 
 
-      //adjust ki by half of the error during jacobi, clamp to 0 for no negative pressure
-      //error is not clamped here, to fix neighborhood pressure even if particle itself is not compressed
-      k_i = std::max(k_i + 0.5f * (s_i + error_force) * (pq_.get_float_attr("factor",p) * (1.0f/(dt_*dt_))), 0.0f);
+         //adjust ki by half of the error during jacobi, clamp to 0 for no negative pressure
+         //error is not clamped here, to fix neighborhood pressure even if particle itself is not compressed
+         k_i = std::max(k_i + 0.5f * (s_i + error_force) * (pq_.get_float_attr("factor",p) * (1.0f/(dt_*dt_))), 0.0f);
 
-      pq_.set_attr("k_i", p, k_i);
+         pq_.set_attr("k_i", p, k_i);
 
-      density_error +=  residuum;
+         density_error +=  residuum;
 
+      }
    }
 
    average_density_error = density_error / pq_.nb();
@@ -284,7 +286,7 @@ void DFSPHSolver::correct_divergence_error()
       
       iter++;
    }
-   std::cout << "DivE dens error: " <<average_density_error << "iter: " << iter << '\n';
+   //std::cout << "DivE dens error: " <<average_density_error << "iter: " << iter << '\n';
 
    #pragma omp parallel for 
    for(size_t p = 0; p < pq_.nb(); p++)
@@ -296,12 +298,12 @@ void DFSPHSolver::correct_divergence_error()
       if(std::isnan(vel.X()) || std::isnan(vel.Y()) || std::isnan(vel.Z())) std::cout <<"divergence bad vel nan\n";
 
       pq_.set_vel(p, vel + dt_ * pq_.get_vector_attr("pressure_acc", p));
-      #pragma omp critical
-      {
-         if(std::isnan(pq_.vel(p).X()) || std::isinf(pq_.vel(p).X())) std::cout << "dive pq_.vel(p).X() x bad\n";
-         if(std::isnan(pq_.vel(p).Y()) || std::isinf(pq_.vel(p).Y())) std::cout << "dive pq_.vel(p).Y() x bad\n";
-         if(std::isnan(pq_.vel(p).Z()) || std::isinf(pq_.vel(p).Z())) std::cout << "dive pq_.vel(p).Z() x bad\n";
-      }
+      // #pragma omp critical
+      // {
+      //    if(std::isnan(pq_.vel(p).X()) || std::isinf(pq_.vel(p).X())) std::cout << "dive pq_.vel(p).X() x bad\n";
+      //    if(std::isnan(pq_.vel(p).Y()) || std::isinf(pq_.vel(p).Y())) std::cout << "dive pq_.vel(p).Y() x bad\n";
+      //    if(std::isnan(pq_.vel(p).Z()) || std::isinf(pq_.vel(p).Z())) std::cout << "dive pq_.vel(p).Z() x bad\n";
+      // }
    }
 
 }
@@ -309,45 +311,46 @@ void DFSPHSolver::correct_divergence_error()
 void DFSPHSolver::divergence_solve_iteration(float& average_density_error)
 {
    float density_error = 0.0f;
-
-   #pragma omp parallel for
-   for (size_t p = 0; p < pq_.nb(); ++p)
+   #pragma omp parallel default(shared)
    {
-      compute_pressure_acc(p, "divergence"); 
-   }
-   #pragma omp parallel for reduction(+:density_error)
-   for (size_t p = 0; p < pq_.nb(); ++p)
-   {
-      float error_force = compute_error_force(p, "divergence");
-   
-      const float density_derivative = pq_.get_float_attr("density_derivative", p);
-      const float s_i = density_derivative;//source
-
-      float kv_i = pq_.get_float_attr("kv_i", p);
-
-      //(dp/dt) + 1/∆t  ∑_j m_j( f_Pi / m_i - f_Pj / m_i)∇Wij = error
-      //should dd be clamped?
-      float residuum = std::max(s_i + error_force, 0.0f); 
-
-      int num_neighbors = 0;
-      const Vector& pos = pq_.pos(p);
-      std::vector<size_t> neighbors;
-      pq_.NeighborsList(neighbors, pos, pq_.get_neighbor_parallel());
-      num_neighbors += static_cast<int>(neighbors.size()); //i dont think they are counting the particle itself
-      // #pragma omp critical
-      // std::cout << "neighbors " << num_neighbors <<'\n';
-      if (num_neighbors < 20)
-         residuum = 0.0f;
+      #pragma omp for
+      for (size_t p = 0; p < pq_.nb(); ++p)
+      {
+         compute_pressure_acc(p, "divergence"); 
+      }
+      #pragma omp for reduction(+:density_error)
+      for (size_t p = 0; p < pq_.nb(); ++p)
+      {
+         float error_force = compute_error_force(p, "divergence");
       
-      //adjust ki by half of the error during jacobi, clamp to 0 for no negative pressure
-      //error is not clamped here, to fix neighborhood pressure even if particle itself is not compressed
-      kv_i = std::max(kv_i + 0.5f*(s_i + error_force) * (pq_.get_float_attr("factor",p)*(1.0f/dt_)), 0.0f); 
+         const float density_derivative = pq_.get_float_attr("density_derivative", p);
+         const float s_i = density_derivative;//source
 
-      pq_.set_attr("kv_i", p, kv_i);
+         float kv_i = pq_.get_float_attr("kv_i", p);
 
-      density_error += residuum; 
+         //(dp/dt) + 1/∆t  ∑_j m_j( f_Pi / m_i - f_Pj / m_i)∇Wij = error
+         //should dd be clamped?
+         float residuum = std::max(s_i + error_force, 0.0f); 
+
+         int num_neighbors = 0;
+         const Vector& pos = pq_.pos(p);
+         std::vector<size_t> neighbors;
+         pq_.NeighborsList(neighbors, pos, pq_.get_neighbor_parallel());
+         num_neighbors += static_cast<int>(neighbors.size()); //i dont think they are counting the particle itself
+         // #pragma omp critical
+         // std::cout << "neighbors " << num_neighbors <<'\n';
+         if (num_neighbors < 20)
+            residuum = 0.0f;
+         
+         //adjust ki by half of the error during jacobi, clamp to 0 for no negative pressure
+         //error is not clamped here, to fix neighborhood pressure even if particle itself is not compressed
+         kv_i = std::max(kv_i + 0.5f*(s_i + error_force) * (pq_.get_float_attr("factor",p)*(1.0f/dt_)), 0.0f); 
+
+         pq_.set_attr("kv_i", p, kv_i);
+
+         density_error += residuum;
+      }
    }
-
    average_density_error = density_error / pq_.nb();
 }
 
@@ -391,15 +394,15 @@ void DFSPHSolver::compute_pressure_acc(const size_t p, const std::string& type)
    }
 
    pq_.set_attr("pressure_acc", p, -pressure_acci_i );
-   #pragma omp critical
-   {
-      if(std::isnan(pressure_acci_i.X()) || std::isinf(pressure_acci_i.X())) std::cout << "pressure_acci_i x bad\n";
-      if(std::isnan(pressure_acci_i.Y()) || std::isinf(pressure_acci_i.Y())) std::cout << "pressure_acci_i y bad\n";
-      if(std::isnan(pressure_acci_i.Z()) || std::isinf(pressure_acci_i.Z())) std::cout << "pressure_acci_i z bad\n";
-      // if(pressure_acci_i.X() < 0)  std::cout << "pressure_acci_i x <=0 " << pressure_acci_i.X() << '\n';
-      // if(pressure_acci_i.Y() < 0) std::cout << "pressure_acci_i y <=0 " << pressure_acci_i.Y() << '\n';
-      // if(pressure_acci_i.Z() < 0) std::cout << "pressure_acci_i z <=0 " << pressure_acci_i.Z() << '\n';
-   }
+   // #pragma omp critical
+   // {
+   //    if(std::isnan(pressure_acci_i.X()) || std::isinf(pressure_acci_i.X())) std::cout << "pressure_acci_i x bad\n";
+   //    if(std::isnan(pressure_acci_i.Y()) || std::isinf(pressure_acci_i.Y())) std::cout << "pressure_acci_i y bad\n";
+   //    if(std::isnan(pressure_acci_i.Z()) || std::isinf(pressure_acci_i.Z())) std::cout << "pressure_acci_i z bad\n";
+   //    // if(pressure_acci_i.X() < 0)  std::cout << "pressure_acci_i x <=0 " << pressure_acci_i.X() << '\n';
+   //    // if(pressure_acci_i.Y() < 0) std::cout << "pressure_acci_i y <=0 " << pressure_acci_i.Y() << '\n';
+   //    // if(pressure_acci_i.Z() < 0) std::cout << "pressure_acci_i z <=0 " << pressure_acci_i.Z() << '\n';
+   // }
 }
 
 //RHS Equation (9) -- forces to correct density error (ρ∗i - ρ0) (change in density due to pressure acc)
@@ -459,7 +462,7 @@ void DFSPHSolver::get_timestep()
    //if(dt > 0.005) dt = 0.005;
    if (dt_ < 0.0001) dt_ = 0.0001;
 
-   std::cout << "Dt: " << dt_ << '\n';
+   //std::cout << "Dt: " << dt_ << '\n';
 
 }
 

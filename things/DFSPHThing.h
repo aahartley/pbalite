@@ -74,8 +74,10 @@ class DFSPHThing: public PbaThingyDingy
     ForceSPHPtr viscosity;
  
     ElasticCollisionHandler collisions;
+    BVHPtr bvh;
     CollisionSurfacePtr box;
     ParticleEmitter emitter;
+    double solve_time_;
 
 };
 

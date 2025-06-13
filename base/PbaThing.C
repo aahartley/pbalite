@@ -26,6 +26,7 @@ PbaThingyDingy::PbaThingyDingy( const std::string& nam ) :
    viewer (0),
    visible (true), 
    dt      (1.0/24.0), 
+   frame(0),
    name    (nam), 
    animate (true)
    {}

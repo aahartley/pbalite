@@ -17,6 +17,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <unordered_map>
 #include <memory>
 
 namespace pba
@@ -138,18 +139,18 @@ class DynamicalStateData
     size_t nb_items_;
     IntegrationStage stage_;
 
-    std::map< std::string, DSAttribute<int> > int_attributes_;
-    std::map< std::string, DSAttribute<float> > float_attributes_;
-    std::map< std::string, DSAttribute<Vector> > vector_attributes_;
-    std::map< std::string, DSAttribute<Color> > color_attributes_;
+    std::unordered_map< std::string, DSAttribute<int> > int_attributes_;
+    std::unordered_map< std::string, DSAttribute<float> > float_attributes_;
+    std::unordered_map< std::string, DSAttribute<Vector> > vector_attributes_;
+    std::unordered_map< std::string, DSAttribute<Color> > color_attributes_;
 
-    std::map< std::string, DSAttribute<Vector> >::iterator    positions_;
-    std::map< std::string, DSAttribute<Vector> >::iterator    velocities_;
-    std::map< std::string, DSAttribute<Vector> >::iterator    accelerations_;
-    std::map< std::string, DSAttribute<float> >::iterator     masses_;
-    std::map< std::string, DSAttribute<float> >::iterator     radii_;
-    std::map< std::string, DSAttribute<int> >::iterator       ids_;
-    std::map< std::string, DSAttribute<Color> >::iterator     cis_;
+    std::unordered_map< std::string, DSAttribute<Vector> >::iterator    positions_;
+    std::unordered_map< std::string, DSAttribute<Vector> >::iterator    velocities_;
+    std::unordered_map< std::string, DSAttribute<Vector> >::iterator    accelerations_;
+    std::unordered_map< std::string, DSAttribute<float> >::iterator     masses_;
+    std::unordered_map< std::string, DSAttribute<float> >::iterator     radii_;
+    std::unordered_map< std::string, DSAttribute<int> >::iterator       ids_;
+    std::unordered_map< std::string, DSAttribute<Color> >::iterator     cis_;
 };
 using DynamicalStatePtr = std::unique_ptr<pba::DynamicalStateData>;
   

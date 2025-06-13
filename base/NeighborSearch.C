@@ -77,26 +77,26 @@ void NeighborSearch::NeighborsList(std::vector<size_t>& neighbors, const Vector&
     {
         #pragma omp parallel
         {
-        std::vector<size_t> thread_neighbors;
+            std::vector<size_t> thread_neighbors;
 
-        #pragma omp for collapse(3) nowait
-        for (size_t kk = k-1; kk <= k+1; ++kk)
-        {
-            for (size_t jj = j-1; jj <= j+1; ++jj)
+            #pragma omp for collapse(3) nowait
+            for (size_t kk = k-1; kk <= k+1; ++kk)
             {
-                for (size_t ii = i-1; ii <= i+1; ++ii)
+                for (size_t jj = j-1; jj <= j+1; ++jj)
                 {
-                    if (ii < 0 || jj < 0 || kk < 0) continue;
-                    size_t ind = Index(ii,jj,kk);
-                    if (ind < size_ )
-                        thread_neighbors.insert(thread_neighbors.end(), grid_[ind].begin(), grid_[ind].end());
+                    for (size_t ii = i-1; ii <= i+1; ++ii)
+                    {
+                        if (ii < 0 || jj < 0 || kk < 0) continue;
+                        size_t ind = Index(ii,jj,kk);
+                        if (ind < size_ )
+                            thread_neighbors.insert(thread_neighbors.end(), grid_[ind].begin(), grid_[ind].end());
+                    }
                 }
             }
-        }
-        #pragma omp critical
-        {
-            neighbors.insert(neighbors.end(), thread_neighbors.begin(), thread_neighbors.end());
-        }
+            #pragma omp critical
+            {
+                neighbors.insert(neighbors.end(), thread_neighbors.begin(), thread_neighbors.end());
+            }
         }
     }
     else
